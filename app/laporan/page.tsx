@@ -10,10 +10,14 @@ import {
   getTotalNasabah,
   getTotalTransaksi,
   getTotalSampah,
-  getTotalJenisSampah
+  getTotalJenisSampah,
+  getRingkasanLabaRugi,
+  getTotalKasMasuk,
+  getNilaiTotalStok
 } from "@/services/laporanService"
 
 import LaporanCard from "@/components/laporan/LaporanCard"
+import LaporanLabaSummary from "@/components/laporan/LaporanLabaSummary"
 
 export default function LaporanPage() {
 
@@ -24,6 +28,14 @@ export default function LaporanPage() {
   const [totalTransaksi, setTotalTransaksi] = useState(0)
   const [totalSampah, setTotalSampah] = useState(0)
   const [totalJenisSampah, setTotalJenisSampah] = useState(0)
+  const [totalKasMasuk, setTotalKasMasuk] = useState(0)
+  const [nilaiStok, setNilaiStok] = useState(0)
+
+  const [ringkasan, setRingkasan] = useState({
+    totalPenjualan: 0,
+    totalNilaiBeli: 0,
+    totalLaba: 0
+  })
 
   useEffect(() => {
     loadData()
@@ -39,6 +51,10 @@ export default function LaporanPage() {
     const sampah = await getTotalSampah()
     const jenis = await getTotalJenisSampah()
 
+    const ringkasanData = await getRingkasanLabaRugi()
+    const kasMasuk = await getTotalKasMasuk()
+    const nilaiStokData = await getNilaiTotalStok()
+
     setData(laporan)
     setSaldoPengelola(saldo)
 
@@ -46,6 +62,10 @@ export default function LaporanPage() {
     setTotalTransaksi(transaksi)
     setTotalSampah(sampah)
     setTotalJenisSampah(jenis)
+
+    setRingkasan(ringkasanData)
+    setTotalKasMasuk(kasMasuk)
+    setNilaiStok(nilaiStokData)
 
   }
 
@@ -78,6 +98,14 @@ export default function LaporanPage() {
           totalTransaksi={totalTransaksi}
           totalSampah={totalSampah}
           totalJenisSampah={totalJenisSampah}
+          totalKasMasuk={totalKasMasuk}
+          nilaiStok={nilaiStok}
+        />
+
+        <LaporanLabaSummary
+          totalPenjualan={ringkasan.totalPenjualan}
+          totalNilaiBeli={ringkasan.totalNilaiBeli}
+          totalLaba={ringkasan.totalLaba}
         />
 
       </div>
