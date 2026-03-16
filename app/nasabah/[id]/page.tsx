@@ -24,6 +24,15 @@ import {
   getDetailSetor
 } from "@/services/transaksiService"
 
+import {
+  User,
+  Wallet,
+  Recycle,
+  ArrowDownCircle,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react"
+
 export default function NasabahDetailPage() {
 
   const params = useParams()
@@ -52,10 +61,6 @@ export default function NasabahDetailPage() {
 
   const limit = 10
   const limitSetor = 10
-
-  /* =========================
-     LOAD DATA
-  ========================= */
 
   useEffect(() => {
 
@@ -103,10 +108,6 @@ export default function NasabahDetailPage() {
 
   }
 
-  /* =========================
-     DETAIL SETOR
-  ========================= */
-
   async function handleOpenDetail(id: string) {
 
     if (openTransaksi === id) {
@@ -120,10 +121,6 @@ export default function NasabahDetailPage() {
     setOpenTransaksi(id)
 
   }
-
-  /* =========================
-     TARIK SALDO
-  ========================= */
 
   async function confirmTarikSaldo() {
 
@@ -146,10 +143,6 @@ export default function NasabahDetailPage() {
 
   }
 
-  /* =========================
-     CANCEL PENARIKAN
-  ========================= */
-
   async function confirmCancelPenarikan() {
 
     if (!cancelId) return
@@ -170,127 +163,176 @@ export default function NasabahDetailPage() {
 
   return (
 
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-10">
+  <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 px-4 md:px-6 py-6 md:py-10">
 
-      <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-green-100">
+  <div className="max-w-5xl mx-auto space-y-6">
 
-        <h1 className="text-3xl font-bold text-green-800 mb-8">
-          Detail Nasabah
-        </h1>
+  {/* HEADER */}
 
-        <NasabahInfo nasabah={nasabah} />
+  <div className="flex items-center gap-3">
 
-        <SaldoCard saldo={saldo} />
+    <User className="text-green-600 w-7 h-7"/>
 
-        <TarikSaldoForm
-          jumlahTarik={jumlahTarik}
-          setJumlahTarik={setJumlahTarik}
-          openModal={() => setShowTarikModal(true)}
-        />
+    <h1 className="text-2xl md:text-3xl font-bold text-green-800">
+      Detail Nasabah
+    </h1>
 
-        {/* RIWAYAT PENARIKAN */}
+  </div>
 
-        <h2 className="text-lg font-semibold mb-4">
+
+  {/* CARD UTAMA */}
+
+  <div className="bg-white rounded-2xl shadow-lg p-5 md:p-8 border border-green-100 space-y-8">
+
+    <NasabahInfo nasabah={nasabah} />
+
+    <SaldoCard saldo={saldo} />
+
+{/* CARD TARIK SALDO */}
+
+<div className="border border-green-200 rounded-xl p-5 bg-green-50">
+
+  <TarikSaldoForm
+    jumlahTarik={jumlahTarik}
+    setJumlahTarik={setJumlahTarik}
+    openModal={() => setShowTarikModal(true)}
+  />
+
+</div>
+
+
+
+    {/* =========================
+        RIWAYAT PENARIKAN
+    ========================= */}
+
+    <div className="space-y-4">
+
+      <div className="flex items-center gap-2">
+
+        <Wallet className="text-green-600"/>
+
+        <h2 className="text-lg font-semibold text-green-800">
           Riwayat Penarikan
         </h2>
 
-        <RiwayatPenarikanTable
-          data={riwayat}
-          onCancel={(id) => {
-            setCancelId(id)
-            setShowCancelModal(true)
-          }}
-        />
+      </div>
 
-        {/* Pagination */}
+      <RiwayatPenarikanTable
+        data={riwayat}
+        onCancel={(id) => {
+          setCancelId(id)
+          setShowCancelModal(true)
+        }}
+      />
 
-        <div className="flex justify-center gap-4 mt-4">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
 
-          <button
-            disabled={page === 1}
-            onClick={() => setPage(page - 1)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Prev
-          </button>
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          <ChevronLeft size={16}/>
+          Prev
+        </button>
 
-          <span>
-            Halaman {page} / {totalPage}
-          </span>
+        <span className="text-sm">
+          Halaman {page} / {totalPage}
+        </span>
 
-          <button
-            disabled={page === totalPage}
-            onClick={() => setPage(page + 1)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Next
-          </button>
-
-        </div>
-
-        {/* RIWAYAT SETOR */}
-
-        <h2 className="text-lg font-semibold mt-10 mb-4">
-          Riwayat Setor Sampah
-        </h2>
-
-        <RiwayatSetorTable
-          setor={setor}
-          detailSetor={detailSetor}
-          openTransaksi={openTransaksi}
-          onOpen={handleOpenDetail}
-        />
-
-        {/* Pagination Setor */}
-
-        <div className="flex justify-center gap-4 mt-4">
-
-          <button
-            disabled={pageSetor === 1}
-            onClick={() => setPageSetor(pageSetor - 1)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Prev
-          </button>
-
-          <span>
-            Halaman {pageSetor} / {totalPageSetor}
-          </span>
-
-          <button
-            disabled={pageSetor === totalPageSetor}
-            onClick={() => setPageSetor(pageSetor + 1)}
-            className="px-4 py-2 bg-gray-200 rounded"
-          >
-            Next
-          </button>
-
-        </div>
+        <button
+          disabled={page === totalPage}
+          onClick={() => setPage(page + 1)}
+          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          Next
+          <ChevronRight size={16}/>
+        </button>
 
       </div>
 
-      {/* MODAL TARIK SALDO */}
+    </div>
 
-      <ConfirmModal
-        isOpen={showTarikModal}
-        title="Konfirmasi Tarik Saldo"
-        message={`Yakin menarik Rp ${Number(jumlahTarik || 0).toLocaleString("id-ID")} ?`}
-        onConfirm={confirmTarikSaldo}
-        onCancel={() => setShowTarikModal(false)}
+
+    {/* =========================
+        RIWAYAT SETOR
+    ========================= */}
+
+    <div className="space-y-4">
+
+      <div className="flex items-center gap-2">
+
+        <Recycle className="text-green-600"/>
+
+        <h2 className="text-lg font-semibold text-green-800">
+          Riwayat Setor Sampah
+        </h2>
+
+      </div>
+
+      <RiwayatSetorTable
+        setor={setor}
+        detailSetor={detailSetor}
+        openTransaksi={openTransaksi}
+        onOpen={handleOpenDetail}
       />
 
-      {/* MODAL CANCEL */}
+      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
 
-      <ConfirmModal
-        isOpen={showCancelModal}
-        title="Batalkan Penarikan"
-        message="Yakin membatalkan penarikan ini?"
-        onConfirm={confirmCancelPenarikan}
-        onCancel={() => setShowCancelModal(false)}
-      />
+        <button
+          disabled={pageSetor === 1}
+          onClick={() => setPageSetor(pageSetor - 1)}
+          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          <ChevronLeft size={16}/>
+          Prev
+        </button>
+
+        <span className="text-sm">
+          Halaman {pageSetor} / {totalPageSetor}
+        </span>
+
+        <button
+          disabled={pageSetor === totalPageSetor}
+          onClick={() => setPageSetor(pageSetor + 1)}
+          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
+        >
+          Next
+          <ChevronRight size={16}/>
+        </button>
+
+      </div>
 
     </div>
 
-  )
+  </div>
+
+
+  {/* MODAL TARIK SALDO */}
+
+  <ConfirmModal
+    isOpen={showTarikModal}
+    title="Konfirmasi Tarik Saldo"
+    message={`Yakin menarik Rp ${Number(jumlahTarik || 0).toLocaleString("id-ID")} ?`}
+    onConfirm={confirmTarikSaldo}
+    onCancel={() => setShowTarikModal(false)}
+  />
+
+  {/* MODAL CANCEL */}
+
+  <ConfirmModal
+    isOpen={showCancelModal}
+    title="Batalkan Penarikan"
+    message="Yakin membatalkan penarikan ini?"
+    onConfirm={confirmCancelPenarikan}
+    onCancel={() => setShowCancelModal(false)}
+  />
+
+</div>
+
+</div>
+
+)
 
 }

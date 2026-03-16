@@ -1,3 +1,7 @@
+"use client"
+
+import { motion } from "framer-motion"
+
 interface Props {
   title: string
   value: string | number
@@ -5,9 +9,14 @@ interface Props {
 }
 
 export default function StatCard({ title, value, color }: Props) {
+
   return (
 
-    <div className={`${color} text-white p-6 rounded-xl shadow`}>
+    <motion.div
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+      className={`${color} text-white p-6 rounded-xl shadow`}
+    >
 
       <h2 className="text-lg font-semibold mb-2">
         {title}
@@ -17,7 +26,7 @@ export default function StatCard({ title, value, color }: Props) {
         {value}
       </p>
 
-    </div>
+    </motion.div>
 
   )
 }

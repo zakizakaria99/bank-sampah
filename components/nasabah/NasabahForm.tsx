@@ -1,5 +1,9 @@
 "use client"
 
+import { useState } from "react"
+import ConfirmModal from "@/components/ui/ConfirmModal"
+import { motion } from "framer-motion"
+
 interface Props {
   nama: string
   alamat: string
@@ -24,53 +28,98 @@ export default function NasabahForm({
   onCancelEdit
 }: Props) {
 
+  const [error, setError] = useState("")
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  function handleSubmit() {
+
+    if (!nama.trim() || !alamat.trim() || !noHp.trim()) {
+      setError("Nama, alamat, dan no HP wajib diisi.")
+      return
+    }
+
+    setError("")
+    setShowConfirm(true)
+  }
+
   return (
 
-    <div className="grid grid-cols-3 gap-4 mb-6">
-
-      <input
-        className="border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Nama"
-        value={nama}
-        onChange={(e) => setNama(e.target.value)}
+    <>
+    
+      <ConfirmModal
+        isOpen={showConfirm}
+        title={editId ? "Update Nasabah" : "Tambah Nasabah"}
+        message={
+          editId
+            ? "Apakah yakin ingin memperbarui data nasabah?"
+            : "Apakah yakin ingin menambahkan nasabah?"
+        }
+        onConfirm={() => {
+          simpan()
+          setShowConfirm(false)
+        }}
+        onCancel={() => setShowConfirm(false)}
       />
 
-      <input
-        className="border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Alamat"
-        value={alamat}
-        onChange={(e) => setAlamat(e.target.value)}
-      />
+      <div className="space-y-4 mb-6">
 
-      <input
-        className="border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="No HP"
-        value={noHp}
-        onChange={(e) => setNoHp(e.target.value)}
-      />
+        {/* INPUT FIELD */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
-      <div className="col-span-3 flex gap-3">
+          <input
+            className="w-full border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+            placeholder="Nama"
+            value={nama}
+            onChange={(e) => setNama(e.target.value)}
+          />
 
-        <button
-          onClick={simpan}
-          type="button"
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg shadow-sm transition"
-        >
-          {editId ? "Update Nasabah" : "Tambah Nasabah"}
-        </button>
+          <input
+            className="w-full border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+            placeholder="Alamat"
+            value={alamat}
+            onChange={(e) => setAlamat(e.target.value)}
+          />
 
-        {editId && (
-          <button
-            onClick={onCancelEdit}
-            className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg"
-          >
-            Cancel
-          </button>
+          <input
+            className="w-full border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
+            placeholder="No HP"
+            value={noHp}
+            onChange={(e) => setNoHp(e.target.value)}
+          />
+
+        </div>
+
+        {/* ERROR */}
+        {error && (
+          <div className="text-red-500 text-sm">
+            {error}
+          </div>
         )}
+
+        {/* BUTTON */}
+        <div className="flex flex-col sm:flex-row gap-3">
+
+          <button
+            onClick={handleSubmit}
+            type="button"
+            className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg shadow-sm transition"
+          >
+            {editId ? "Update Nasabah" : "Tambah Nasabah"}
+          </button>
+
+          {editId && (
+            <button
+              onClick={onCancelEdit}
+              className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg"
+            >
+              Cancel
+            </button>
+          )}
+
+        </div>
 
       </div>
 
-    </div>
-
+    </>
   )
 }

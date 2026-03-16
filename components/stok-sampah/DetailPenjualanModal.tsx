@@ -58,6 +58,12 @@ export default function DetailPenjualanModal({
     }).format(value)
   }
 
+  // HITUNG TOTAL PENJUALAN
+  const totalKeseluruhan = data.reduce(
+    (sum, item) => sum + item.total_penjualan,
+    0
+  )
+
   return (
 
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
@@ -107,8 +113,8 @@ export default function DetailPenjualanModal({
                 <tr key={item.id} className="border-t">
 
                   <td className="p-2">
-  {item.nama_sampah}
-</td>
+                    {item.nama_sampah}
+                  </td>
 
                   <td className="p-2">
                     {item.berat} kg
@@ -125,6 +131,20 @@ export default function DetailPenjualanModal({
                 </tr>
 
               ))}
+
+              {/* TOTAL KESELURUHAN */}
+
+              <tr className="border-t bg-gray-100 font-semibold">
+
+                <td colSpan={3} className="p-2 text-right">
+                  Total Penjualan
+                </td>
+
+                <td className="p-2">
+                  {formatRupiah(totalKeseluruhan)}
+                </td>
+
+              </tr>
 
             </tbody>
 

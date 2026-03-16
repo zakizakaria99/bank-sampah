@@ -1,3 +1,5 @@
+import { ArrowDownCircle } from "lucide-react"
+
 type Props = {
   jumlahTarik: string
   setJumlahTarik: (v: string) => void
@@ -12,13 +14,19 @@ export default function TarikSaldoForm({
 
   return (
 
-    <div className="bg-blue-50 p-6 rounded-lg mb-6">
+    <div className="bg-blue-50 p-6 rounded-lg mb-6 border border-blue-200">
 
-      <h2 className="text-lg font-semibold mb-4">
-        Tarik Saldo
-      </h2>
+      <div className="flex items-center gap-2 mb-4 text-blue-800 font-semibold">
 
-      <div className="flex gap-4">
+        <ArrowDownCircle className="w-5 h-5"/>
+
+        <h2 className="text-lg">
+          Tarik Saldo
+        </h2>
+
+      </div>
+
+      <div className="flex flex-col md:flex-row gap-4">
 
         <input
           type="number"
@@ -33,7 +41,7 @@ export default function TarikSaldoForm({
         <button
           type="button"
           onClick={openModal}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 rounded-lg"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg"
         >
           Tarik
         </button>

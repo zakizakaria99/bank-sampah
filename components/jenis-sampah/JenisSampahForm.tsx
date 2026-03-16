@@ -1,5 +1,7 @@
 "use client"
 
+import { useState } from "react"
+
 interface Props {
   nama: string
   harga: number | ""
@@ -20,6 +22,8 @@ export default function JenisSampahForm({
   onCancelEdit
 }: Props) {
 
+  const [error, setError] = useState("")
+
   const handleHargaChange = (value: string) => {
 
     if (value === "") {
@@ -34,6 +38,34 @@ export default function JenisSampahForm({
       setHarga(angka)
     }
 
+  }
+
+  function handleSubmit() {
+
+    // VALIDASI NAMA
+    if (!nama.trim()) {
+      setError("Nama sampah wajib diisi.")
+      return
+    }
+
+    // VALIDASI HARGA
+    if (harga === "" || harga <= 0) {
+      setError("Harga per kg harus diisi dan lebih dari 0.")
+      return
+    }
+
+    setError("")
+
+    // KONFIRMASI
+    const confirm = window.confirm(
+      editId
+        ? "Apakah yakin ingin memperbarui jenis sampah?"
+        : "Apakah yakin ingin menambahkan jenis sampah?"
+    )
+
+    if (!confirm) return
+
+    simpan()
   }
 
   return (
@@ -57,11 +89,17 @@ export default function JenisSampahForm({
         onChange={(e) => handleHargaChange(e.target.value)}
       />
 
+      {error && (
+        <div className="col-span-2 text-red-500 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="col-span-2 flex gap-3">
 
         <button
           type="button"
-          onClick={simpan}
+          onClick={handleSubmit}
           className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
         >
           {editId ? "Update Sampah" : "Tambah Sampah"}

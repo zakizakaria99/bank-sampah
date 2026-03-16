@@ -1,5 +1,6 @@
 import { Nasabah } from "@/types/nasabah"
 import Link from "next/link"
+import { Pencil, Eye } from "lucide-react"
 
 interface Props {
   data: Nasabah[]
@@ -10,9 +11,9 @@ export default function NasabahTable({ data, onEdit }: Props) {
 
   return (
 
-    <div className="overflow-hidden rounded-lg border border-green-100">
+    <div className="w-full overflow-x-auto rounded-lg border border-green-100">
 
-      <table className="w-full">
+      <table className="w-full min-w-[600px]">
 
         <thead className="bg-green-100 text-green-900">
 
@@ -48,22 +49,24 @@ export default function NasabahTable({ data, onEdit }: Props) {
 
               <td className="p-4 flex justify-center gap-2">
 
-                <Link
-                  href={`/nasabah/${n.id}`}
-                  className="bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
-                >
-                  Detail
-                </Link>
+  <Link
+    href={`/nasabah/${n.id}`}
+    className="flex items-center gap-1 bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
+  >
+    <Eye size={16}/>
+    Detail
+  </Link>
 
-                <button
-                  type="button"
-                  onClick={() => onEdit(n)}
-                  className="bg-green-400 hover:bg-green-500 text-white px-3 py-1 rounded-md text-sm"
-                >
-                  Edit
-                </button>
+  <button
+    type="button"
+    onClick={() => onEdit(n)}
+    className="flex items-center gap-1 bg-green-400 hover:bg-green-500 text-white px-3 py-1 rounded-md text-sm"
+  >
+    <Pencil size={16}/>
+    Edit
+  </button>
 
-              </td>
+</td>
 
             </tr>
 

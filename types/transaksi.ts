@@ -25,10 +25,11 @@ export interface Transaksi {
 
 export interface DetailTransaksi {
   id: string
+  transaksi_id: string
+  jenis_sampah_id: string
   berat: number
   harga: number
   subtotal: number
-
   jenis_sampah: {
     nama_sampah: string
   }
