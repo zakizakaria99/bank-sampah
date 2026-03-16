@@ -39,6 +39,12 @@ export default function Home() {
           </div>
         </Link>
 
+        <Link href="/grafik">
+          <div className="bg-violet-600 text-white p-10 rounded-xl cursor-pointer text-center text-xl font-bold hover:bg-violet-700">
+             Grafik
+          </div>
+        </Link>
+
       </div>
 
     </div>

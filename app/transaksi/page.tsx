@@ -53,78 +53,101 @@ export default function TransaksiPage() {
   }
 
   function updateItem(
-  index: number,
-  field: string,
-  value: any
-) {
+    index: number,
+    field: string,
+    value: any
+  ) {
 
-  const newItems = [...items]
+    const newItems = [...items]
 
-  newItems[index] = {
-    ...newItems[index],
-    [field]: value
-  }
-
-  setItems(newItems)
-
-}
-
-function removeItem(index: number) {
-
-  if (items.length === 1) {
-
-    setItems([
-      { jenis_sampah_id: "", berat: "" }
-    ])
-
-    return
-  }
-
-  const newItems = items.filter(
-    (_, i) => i !== index
-  )
-
-  setItems(newItems)
-
-}
-
-function hitungTotal() {
-
-  let total = 0
-
-  items.forEach((item) => {
-
-    const dataSampah = sampah.find(
-  (s) => s.id === item.jenis_sampah_id
-)
-
-    if (dataSampah) {
-
-      const berat = Number(item.berat || 0)
-
-      const subtotal =
-        Math.round(dataSampah.harga_per_kg * berat)
-
-      total += subtotal
-
+    newItems[index] = {
+      ...newItems[index],
+      [field]: value
     }
 
-  })
+    setItems(newItems)
 
-  const totalNasabah = Math.round(total * 0.6)
-  const totalPengelola = Math.round(total * 0.4)
-
-  return {
-    totalNasabah,
-    totalPengelola
   }
 
-}
+  function removeItem(index: number) {
+
+    if (items.length === 1) {
+
+      setItems([
+        { jenis_sampah_id: "", berat: "" }
+      ])
+
+      return
+    }
+
+    const newItems = items.filter(
+      (_, i) => i !== index
+    )
+
+    setItems(newItems)
+
+  }
+
+  function hitungTotal() {
+
+    let total = 0
+
+    items.forEach((item) => {
+
+      const dataSampah = sampah.find(
+        (s) => s.id === item.jenis_sampah_id
+      )
+
+      if (dataSampah) {
+
+        const berat = Number(item.berat || 0)
+
+        const subtotal =
+          Math.round(dataSampah.harga_per_kg * berat)
+
+        total += subtotal
+
+      }
+
+    })
+
+    const totalNasabah = Math.round(total * 0.6)
+    const totalPengelola = Math.round(total * 0.4)
+
+    return {
+      totalNasabah,
+      totalPengelola
+    }
+
+  }
 
   const {
     totalNasabah,
     totalPengelola
   } = hitungTotal()
+
+  // VALIDASI TRANSAKSI
+  function validasiTransaksi() {
+
+    if (!nasabahId) {
+      alert("Pilih nasabah terlebih dahulu")
+      return false
+    }
+
+    const validItems = items.filter(
+      (item) =>
+        item.jenis_sampah_id !== "" &&
+        Number(item.berat) > 0
+    )
+
+    if (validItems.length === 0) {
+      alert("Masukkan minimal satu jenis sampah dan berat")
+      return false
+    }
+
+    return true
+
+  }
 
   async function confirmSimpanTransaksi() {
 
@@ -169,6 +192,16 @@ function hitungTotal() {
 
   }
 
+  function handleSimpanClick() {
+
+    const valid = validasiTransaksi()
+
+    if (!valid) return
+
+    setShowSimpanModal(true)
+
+  }
+
   return (
 
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-10">
@@ -187,16 +220,16 @@ function hitungTotal() {
 
         {items.map((item, index) => (
 
-  <TransaksiItemRow
-    key={index}
-    item={item}
-    index={index}
-    sampah={sampah}
-    updateItem={updateItem}
-    removeItem={removeItem}
-  />
+          <TransaksiItemRow
+            key={index}
+            item={item}
+            index={index}
+            sampah={sampah}
+            updateItem={updateItem}
+            removeItem={removeItem}
+          />
 
-))}
+        ))}
 
         <button
           onClick={tambahBaris}
@@ -219,7 +252,7 @@ function hitungTotal() {
         />
 
         <button
-          onClick={() => setShowSimpanModal(true)}
+          onClick={handleSimpanClick}
           className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
         >
           Simpan Transaksi
@@ -230,4 +263,5 @@ function hitungTotal() {
     </div>
 
   )
+
 }

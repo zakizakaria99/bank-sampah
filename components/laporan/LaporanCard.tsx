@@ -28,6 +28,10 @@ export default function LaporanCard({
       maximumFractionDigits: 2
     })
 
+  // FORMAT BERAT SAMPAH
+  const formatKg = (value: number) =>
+    Number(value.toFixed(2))
+
   return (
 
     <div className="space-y-6 mb-8">
@@ -60,7 +64,7 @@ export default function LaporanCard({
 
         <StatCard
           title="Total Sampah Terkumpul"
-          value={`${totalSampah} Kg`}
+          value={`${formatKg(totalSampah)} Kg`}
           color="bg-orange-500"
         />
 

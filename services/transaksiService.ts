@@ -25,6 +25,17 @@ export async function simpanTransaksi(
   totalPengelola: number
 ) {
 
+  // VALIDASI: harus ada minimal 1 item valid
+  const validItems = items.filter(
+    (item) =>
+      item.jenis_sampah_id !== "" &&
+      Number(item.berat) > 0
+  )
+
+  if (validItems.length === 0) {
+    throw new Error("Detail transaksi kosong")
+  }
+
   const { data, error } = await supabase
     .from("transaksi")
     .insert([
@@ -37,13 +48,13 @@ export async function simpanTransaksi(
     .select()
 
   if (error) {
-  console.error(error)
-  throw new Error(error.message)
-}
+    console.error(error)
+    throw new Error(error.message)
+  }
 
   const transaksiId = data[0].id
 
-  for (const item of items) {
+  for (const item of validItems) {
 
     const sampahData = sampah.find(
       (s) => s.id === item.jenis_sampah_id
@@ -51,11 +62,10 @@ export async function simpanTransaksi(
 
     if (!sampahData) continue
 
-    // ubah berat menjadi number jika kosong
     const berat = Number(item.berat || 0)
 
     const subtotal =
-  Math.round(sampahData.harga_per_kg * berat)
+      Math.round(sampahData.harga_per_kg * berat)
 
     await supabase
       .from("detail_transaksi")

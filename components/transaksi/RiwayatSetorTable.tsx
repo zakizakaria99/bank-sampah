@@ -29,73 +29,73 @@ export default function RiwayatSetorTable({
 
         {setor.map((t) => (
 
-  <Fragment key={t.id}>
+          <Fragment key={`transaksi-${t.id}`}>
 
-    <tr
-      className="cursor-pointer hover:bg-gray-50"
-      onClick={() => onOpen(t.id)}
-    >
-      <td className="p-2 border text-center">
-        {new Date(t.tanggal).toLocaleDateString("id-ID")}
-      </td>
-    </tr>
+            <tr
+              className="cursor-pointer hover:bg-gray-50"
+              onClick={() => onOpen(t.id)}
+            >
+              <td className="p-2 border text-center">
+                {new Date(t.tanggal).toLocaleDateString("id-ID")}
+              </td>
+            </tr>
 
-    {openTransaksi === t.id && (
+            {openTransaksi === t.id && (
 
-      <tr>
+              <tr key={`detail-wrapper-${t.id}`}>
 
-        <td className="p-4 border bg-gray-50">
+                <td className="p-4 border bg-gray-50">
 
-          <table className="w-full border">
+                  <table className="w-full border">
 
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border p-2">Jenis Sampah</th>
-                <th className="border p-2">Berat</th>
-                <th className="border p-2">Harga</th>
-                <th className="border p-2">Subtotal</th>
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border p-2">Jenis Sampah</th>
+                        <th className="border p-2">Berat</th>
+                        <th className="border p-2">Harga</th>
+                        <th className="border p-2">Subtotal</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+
+                      {detailSetor.map((d, index) => (
+
+                        <tr key={`detail-${d.id ?? index}`}>
+
+                          <td className="border p-2">
+                            {d.jenis_sampah.nama_sampah}
+                          </td>
+
+                          <td className="border p-2">
+                            {d.berat} kg
+                          </td>
+
+                          <td className="border p-2">
+                            Rp {d.harga.toLocaleString("id-ID")}
+                          </td>
+
+                          <td className="border p-2">
+                            Rp {d.subtotal.toLocaleString("id-ID")}
+                          </td>
+
+                        </tr>
+
+                      ))}
+
+                    </tbody>
+
+                  </table>
+
+                </td>
+
               </tr>
-            </thead>
 
-            <tbody>
+            )}
 
-              {detailSetor.map((d) => (
+          </Fragment>
 
-                <tr key={d.id}>
-
-                  <td className="border p-2">
-                    {d.jenis_sampah.nama_sampah}
-                  </td>
-
-                  <td className="border p-2">
-                    {d.berat} kg
-                  </td>
-
-                  <td className="border p-2">
-                    Rp {d.harga.toLocaleString("id-ID")}
-                  </td>
-
-                  <td className="border p-2">
-                    Rp {d.subtotal.toLocaleString("id-ID")}
-                  </td>
-
-                </tr>
-
-              ))}
-
-            </tbody>
-
-          </table>
-
-        </td>
-
-      </tr>
-
-    )}
-
-  </Fragment>
-
-))}
+        ))}
 
       </tbody>
 
