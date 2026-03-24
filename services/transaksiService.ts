@@ -1,15 +1,20 @@
 import { supabase } from "@/lib/supabase"
 import { ItemTransaksi, Sampah } from "@/types/transaksi"
 
+/* =========================
+   MASTER DATA
+========================= */
 export async function getMasterData() {
-
-  const { data: nasabah } = await supabase
+  const { data: nasabah, error: err1 } = await supabase
     .from("nasabah")
     .select("*")
 
-  const { data: sampah } = await supabase
+  const { data: sampah, error: err2 } = await supabase
     .from("jenis_sampah")
     .select("*")
+
+  if (err1) console.error("get nasabah:", err1)
+  if (err2) console.error("get sampah:", err2)
 
   return {
     nasabah: nasabah || [],
@@ -17,6 +22,9 @@ export async function getMasterData() {
   }
 }
 
+/* =========================
+   SIMPAN TRANSAKSI
+========================= */
 export async function simpanTransaksi(
   nasabahId: string,
   items: ItemTransaksi[],
@@ -25,7 +33,6 @@ export async function simpanTransaksi(
   totalPengelola: number
 ) {
 
-  // VALIDASI: harus ada minimal 1 item valid
   const validItems = items.filter(
     (item) =>
       item.jenis_sampah_id !== "" &&
@@ -36,7 +43,7 @@ export async function simpanTransaksi(
     throw new Error("Detail transaksi kosong")
   }
 
-  const { data, error } = await supabase
+  const { data: transaksiData, error: transaksiError } = await supabase
     .from("transaksi")
     .insert([
       {
@@ -46,49 +53,103 @@ export async function simpanTransaksi(
       }
     ])
     .select()
+    .single()
 
-  if (error) {
-    console.error(error)
-    throw new Error(error.message)
+  if (transaksiError) {
+    console.error("Insert transaksi:", transaksiError)
+    throw new Error(transaksiError.message)
   }
 
-  const transaksiId = data[0].id
+  const transaksiId = transaksiData.id
 
-  for (const item of validItems) {
+  /* =========================
+     🔥 FIX DI SINI (SUBTOTAL 60%)
+  ========================== */
+  const detailPayload = validItems
+    .map((item) => {
+      const sampahData = sampah.find(
+        (s) => s.id === item.jenis_sampah_id
+      )
 
-    const sampahData = sampah.find(
-      (s) => s.id === item.jenis_sampah_id
-    )
+      if (!sampahData) return null
 
-    if (!sampahData) continue
+      const berat = Number(item.berat || 0)
 
-    const berat = Number(item.berat || 0)
+      // 🔥 subtotal kotor (100%)
+      const subtotalKotor = sampahData.harga_per_kg * berat
 
-    const subtotal =
-      Math.round(sampahData.harga_per_kg * berat)
+      // 🔥 hanya 60% untuk nasabah
+      const subtotal = Math.round(subtotalKotor * 0.6)
 
-    await supabase
-      .from("detail_transaksi")
+      return {
+        transaksi_id: transaksiId,
+        jenis_sampah_id: item.jenis_sampah_id,
+        berat,
+        harga: sampahData.harga_per_kg,
+        subtotal
+      }
+    })
+    .filter(Boolean)
+
+  if (detailPayload.length === 0) {
+    throw new Error("Detail transaksi tidak valid")
+  }
+
+  const { error: detailError } = await supabase
+    .from("detail_transaksi")
+    .insert(detailPayload)
+
+  if (detailError) {
+    console.error("Insert detail:", detailError)
+    throw new Error(detailError.message)
+  }
+
+  /* =========================
+     UPDATE SALDO PENGELOLA
+  ========================== */
+  const { data: pengelola, error: err0 } = await supabase
+    .from("pengelola")
+    .select("id, saldo")
+    .eq("id", 1)
+    .maybeSingle()
+
+  if (err0) throw err0
+
+  if (!pengelola) {
+    const { error: insertErr } = await supabase
+      .from("pengelola")
       .insert([
         {
-          transaksi_id: transaksiId,
-          jenis_sampah_id: item.jenis_sampah_id,
-          berat: berat,
-          harga: sampahData.harga_per_kg,
-          subtotal
+          id: 1,
+          saldo: totalPengelola
         }
       ])
 
+    if (insertErr) throw insertErr
+  } else {
+    const saldoSekarang = Number(pengelola.saldo || 0)
+
+    const { error: updateErr } = await supabase
+      .from("pengelola")
+      .update({
+        saldo: saldoSekarang + totalPengelola
+      })
+      .eq("id", 1)
+
+    if (updateErr) throw updateErr
   }
 
+  return transaksiId
 }
 
+/* =========================
+   RIWAYAT SETOR NASABAH
+========================= */
 export async function getRiwayatSetorNasabah(
   nasabahId: string,
   page: number,
   limit: number = 10
 ) {
-
   const start = (page - 1) * limit
   const end = start + limit - 1
 
@@ -96,7 +157,9 @@ export async function getRiwayatSetorNasabah(
     .from("transaksi")
     .select("*", { count: "exact" })
     .eq("nasabah_id", nasabahId)
-    .order("tanggal", { ascending: false })
+
+    .order("created_at", { ascending: false }) // ✅ fix sorting
+
     .range(start, end)
 
   if (error) throw error
@@ -107,11 +170,15 @@ export async function getRiwayatSetorNasabah(
   }
 }
 
+/* =========================
+   DETAIL SETOR
+========================= */
 export async function getDetailSetor(transaksiId: string) {
-
   const { data, error } = await supabase
     .from("detail_transaksi")
     .select(`
+      id,
+      transaksi_id,
       berat,
       harga,
       subtotal,
@@ -121,7 +188,10 @@ export async function getDetailSetor(transaksiId: string) {
     `)
     .eq("transaksi_id", transaksiId)
 
-  if (error) throw error
+  if (error) {
+    console.error("getDetailSetor:", error)
+    throw error
+  }
 
   return data || []
 }

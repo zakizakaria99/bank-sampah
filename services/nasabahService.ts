@@ -1,18 +1,17 @@
 import { supabase } from "@/lib/supabase"
+import { getKasBersih } from "./laporanService"
 
 /* =========================
    NASABAH CRUD
 ========================= */
 
 export async function getNasabah() {
-
   const { data, error } = await supabase
     .from("nasabah")
     .select("*")
     .order("created_at", { ascending: false })
 
   if (error) throw error
-
   return data || []
 }
 
@@ -21,7 +20,6 @@ export async function tambahNasabah(nasabah: {
   alamat: string
   no_hp: string
 }) {
-
   const { error } = await supabase
     .from("nasabah")
     .insert([nasabah])
@@ -37,7 +35,6 @@ export async function updateNasabah(
     no_hp: string
   }
 ) {
-
   const { error } = await supabase
     .from("nasabah")
     .update(nasabah)
@@ -46,13 +43,11 @@ export async function updateNasabah(
   if (error) throw error
 }
 
-
 /* =========================
    DETAIL NASABAH
 ========================= */
 
 export async function getDetailNasabah(nasabahId: string) {
-
   const { data, error } = await supabase
     .from("nasabah")
     .select("*")
@@ -60,12 +55,14 @@ export async function getDetailNasabah(nasabahId: string) {
     .single()
 
   if (error) throw error
-
   return data
 }
 
-export async function getSaldoNasabah(nasabahId: string) {
+/* =========================
+   SALDO NASABAH (REAL)
+========================= */
 
+export async function getSaldoNasabah(nasabahId: string) {
   const { data: transaksi } = await supabase
     .from("transaksi")
     .select("total_nasabah")
@@ -77,23 +74,16 @@ export async function getSaldoNasabah(nasabahId: string) {
     .eq("nasabah_id", nasabahId)
 
   const totalSetoran =
-    transaksi?.reduce(
-      (sum, t) => sum + t.total_nasabah,
-      0
-    ) || 0
+    transaksi?.reduce((sum, t) => sum + Number(t.total_nasabah || 0), 0) || 0
 
   const totalPenarikan =
-    penarikan?.reduce(
-      (sum, p) => sum + p.jumlah,
-      0
-    ) || 0
+    penarikan?.reduce((sum, p) => sum + Number(p.jumlah || 0), 0) || 0
 
   return totalSetoran - totalPenarikan
 }
 
-
 /* =========================
-   RIWAYAT PENARIKAN (PAGINATION)
+   RIWAYAT PENARIKAN
 ========================= */
 
 export async function getRiwayatPenarikan(
@@ -101,7 +91,6 @@ export async function getRiwayatPenarikan(
   page: number,
   limit: number = 10
 ) {
-
   const start = (page - 1) * limit
   const end = start + limit - 1
 
@@ -120,16 +109,48 @@ export async function getRiwayatPenarikan(
   }
 }
 
-
 /* =========================
-   PENARIKAN SALDO
+   TARIK SALDO NASABAH (FIXED & SAFE)
 ========================= */
 
 export async function tarikSaldo(
   nasabahId: string,
   jumlah: number
 ) {
+  if (jumlah <= 0) {
+    throw new Error("Jumlah tidak valid")
+  }
 
+  /* =========================
+     1. CEK SALDO NASABAH (REAL-TIME)
+  ========================= */
+  const saldoNasabah = await getSaldoNasabah(nasabahId)
+
+  if (saldoNasabah < jumlah) {
+    throw new Error("Saldo nasabah tidak cukup")
+  }
+
+  /* =========================
+     2. CEK KAS BERSIH
+  ========================= */
+  const kasBersih = await getKasBersih()
+
+  if (kasBersih < jumlah) {
+    throw new Error("Kas tidak mencukupi")
+  }
+
+  /* =========================
+     3. DOUBLE CHECK (ANTI RACE CONDITION)
+  ========================= */
+  const kasCheckLagi = await getKasBersih()
+
+  if (kasCheckLagi < jumlah) {
+    throw new Error("Kas tidak mencukupi (update terbaru)")
+  }
+
+  /* =========================
+     4. INSERT PENARIKAN
+  ========================= */
   const { error } = await supabase
     .from("penarikan_saldo")
     .insert([
@@ -140,10 +161,15 @@ export async function tarikSaldo(
     ])
 
   if (error) throw error
+
+  return true
 }
 
-export async function cancelPenarikan(id: string) {
+/* =========================
+   CANCEL PENARIKAN
+========================= */
 
+export async function cancelPenarikan(id: string) {
   const { error } = await supabase
     .from("penarikan_saldo")
     .delete()
@@ -151,4 +177,5 @@ export async function cancelPenarikan(id: string) {
 
   if (error) throw error
 
+  return true
 }

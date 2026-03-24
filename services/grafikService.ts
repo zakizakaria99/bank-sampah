@@ -1,121 +1,146 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { supabase } from "@/lib/supabase"
 import {
-  GrafikBulanan,
   GrafikData,
-  LaporanSampahRow,
   LaporanSampahTable
 } from "@/types/grafik"
 
 const namaBulan = [
   "",
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mei",
-  "Jun",
-  "Jul",
-  "Agu",
-  "Sep",
-  "Okt",
-  "Nov",
-  "Des"
+  "Jan","Feb","Mar","Apr","Mei","Jun",
+  "Jul","Agu","Sep","Okt","Nov","Des"
 ]
 
+/* =========================
+   GRAFIK SEMESTER (100%)
+========================= */
 export async function getGrafikSemester(
   tahun: number,
   semester: number
 ): Promise<GrafikData[]> {
 
-  const { data, error } = await supabase.rpc("grafik_bulanan", {
-    tahun_param: tahun
-  })
+  const { data, error } = await supabase
+    .from("transaksi")
+    .select(`
+      tanggal,
+      detail_transaksi (
+        berat,
+        harga
+      )
+    `)
 
   if (error) {
     throw new Error(error.message)
   }
-
-  const result: GrafikBulanan[] = data ?? []
 
   const bulanSemester =
     semester === 1
       ? [1,2,3,4,5,6]
       : [7,8,9,10,11,12]
 
-  const grafik: GrafikData[] = bulanSemester.map((b) => {
+  const map: Record<number, { berat: number; pendapatan: number }> = {}
 
-    const r = result.find((x) => x.bulan === b)
-
-    return {
-      bulan: namaBulan[b],
-      berat: r ? Number(r.total_berat) : 0,
-      pendapatan: r ? Number(r.total_pendapatan) : 0
-    }
-
+  bulanSemester.forEach(b => {
+    map[b] = { berat: 0, pendapatan: 0 }
   })
 
-  return grafik
+  for (const trx of data || []) {
+
+    if (!trx.tanggal) continue
+
+    const date = new Date(trx.tanggal)
+    const bulan = date.getMonth() + 1
+    const tahunData = date.getFullYear()
+
+    if (tahunData !== tahun) continue
+    if (!bulanSemester.includes(bulan)) continue
+
+    for (const d of trx.detail_transaksi || []) {
+
+      const berat = Number(d.berat || 0)
+
+      // 🔥 100% (BUKAN subtotal)
+      const pendapatan = Number(d.harga || 0) * berat
+
+      map[bulan].berat += berat
+      map[bulan].pendapatan += pendapatan
+    }
+  }
+
+  return bulanSemester.map((b) => ({
+    bulan: namaBulan[b],
+    berat: map[b].berat,
+    pendapatan: map[b].pendapatan
+  }))
 }
 
+
+/* =========================
+   LAPORAN TAHUNAN (100%)
+========================= */
 export async function getLaporanSampahTahunan(
   tahun: number
 ): Promise<LaporanSampahTable[]> {
 
-  const { data, error } = await supabase.rpc("laporan_sampah_tahunan", {
-    tahun_param: tahun
-  })
+  const { data, error } = await supabase
+    .from("transaksi")
+    .select(`
+      tanggal,
+      detail_transaksi (
+        berat,
+        harga,
+        jenis_sampah:jenis_sampah_id (
+          nama_sampah
+        )
+      )
+    `)
 
   if (error) {
     throw new Error(error.message)
   }
 
-  const rows: LaporanSampahRow[] = data ?? []
-
   const map: Record<string, LaporanSampahTable> = {}
 
-  for (const r of rows) {
+  for (const trx of data || []) {
 
-    if (!map[r.nama_sampah]) {
+    if (!trx.tanggal) continue
 
-      map[r.nama_sampah] = {
-        nama_sampah: r.nama_sampah,
-        Jan: 0,
-        Feb: 0,
-        Mar: 0,
-        Apr: 0,
-        Mei: 0,
-        Jun: 0,
-        Jul: 0,
-        Agu: 0,
-        Sep: 0,
-        Okt: 0,
-        Nov: 0,
-        Des: 0,
-        total_kg: 0,
-        total_harga: 0
+    const date = new Date(trx.tanggal)
+    const tahunData = date.getFullYear()
+    const bulan = date.getMonth() + 1
+
+    if (tahunData !== tahun) continue
+
+    const namaBulanKey = namaBulan[bulan] as keyof LaporanSampahTable
+
+    for (const d of trx.detail_transaksi || []) {
+
+      // 🔥 FIX RELASI (BUKAN ARRAY)
+      const jenis = d.jenis_sampah as any
+const nama = jenis?.nama_sampah || "Tidak diketahui"
+
+      const berat = Number(d.berat || 0)
+
+      // 🔥 100% (harga × berat)
+      const totalHarga = Number(d.harga || 0) * berat
+
+      if (!map[nama]) {
+        map[nama] = {
+          nama_sampah: nama,
+          Jan: 0, Feb: 0, Mar: 0, Apr: 0, Mei: 0, Jun: 0,
+          Jul: 0, Agu: 0, Sep: 0, Okt: 0, Nov: 0, Des: 0,
+          total_kg: 0,
+          total_harga: 0
+        }
       }
+
+      if (namaBulanKey in map[nama]) {
+        ;(map[nama] as any)[namaBulanKey] += berat
+      }
+
+      map[nama].total_kg += berat
+      map[nama].total_harga += totalHarga
     }
-
-    const bulan = namaBulan[r.bulan] as
-  | "Jan"
-  | "Feb"
-  | "Mar"
-  | "Apr"
-  | "Mei"
-  | "Jun"
-  | "Jul"
-  | "Agu"
-  | "Sep"
-  | "Okt"
-  | "Nov"
-  | "Des"
-
-    if (bulan in map[r.nama_sampah]) {
-      ;(map[r.nama_sampah] as any)[bulan] = Number(r.total_berat)
-    }
-
-    map[r.nama_sampah].total_kg += Number(r.total_berat)
-    map[r.nama_sampah].total_harga += Number(r.total_harga)
   }
 
   return Object.values(map)

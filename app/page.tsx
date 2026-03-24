@@ -131,7 +131,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/nasabah.png"
+    src="/Nasabah1.png"
     alt="Nasabah"
     width={200}
     height={200}
@@ -156,7 +156,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/jenis-sampah.png"
+    src="/Jenis-sampah1.png"
     alt="Jenis-sampah"
     width={200}
     height={200}
@@ -181,7 +181,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/transaksi.png"
+    src="/Transaksi1.png"
     alt="Transaksi"
     width={200}
     height={200}
@@ -206,7 +206,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/stok.png"
+    src="/Stok1.png"
     alt="Stok Sampah"
     width={200}
     height={200}
@@ -231,7 +231,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/laporan.png"
+    src="/Laporan1.png"
     alt="Laporan"
     width={200}
     height={200}
@@ -256,7 +256,7 @@ export default function HomePage() {
 
   {/* ICON */}
   <Image
-    src="/grafik.png"
+    src="/Grafik1.png"
     alt="Grafik"
     width={200}
     height={200}

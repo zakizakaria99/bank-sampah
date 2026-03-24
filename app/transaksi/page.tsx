@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
+import { Plus, Save, Recycle } from "lucide-react"
 
 import {
   Nasabah,
@@ -22,6 +23,7 @@ export default function TransaksiPage() {
 
   const [nasabah, setNasabah] = useState<Nasabah[]>([])
   const [sampah, setSampah] = useState<Sampah[]>([])
+
   const [nasabahId, setNasabahId] = useState("")
 
   const [items, setItems] = useState<ItemTransaksi[]>([
@@ -30,105 +32,71 @@ export default function TransaksiPage() {
 
   const [showSimpanModal, setShowSimpanModal] = useState(false)
 
-  useEffect(() => {
-    loadData()
+  // ✅ useCallback biar aman
+  const loadData = useCallback(async () => {
+    try {
+      const result = await getMasterData()
+      setNasabah(result.nasabah || [])
+      setSampah(result.sampah || [])
+    } catch (error) {
+      console.error("Error load master data:", error)
+    }
   }, [])
 
-  async function loadData() {
+  // ✅ FIX useEffect
+  useEffect(() => {
+    const fetchData = async () => {
+      await loadData()
+    }
 
-    const result = await getMasterData()
-
-    setNasabah(result.nasabah)
-    setSampah(result.sampah)
-
-  }
+    fetchData()
+  }, [loadData])
 
   function tambahBaris() {
-
-    setItems([
-      ...items,
-      { jenis_sampah_id: "", berat: "" }
-    ])
-
+    setItems([...items, { jenis_sampah_id: "", berat: "" }])
   }
 
   function updateItem(
     index: number,
-    field: string,
-    value: any
+    field: keyof ItemTransaksi,
+    value: string
   ) {
-
     const newItems = [...items]
-
-    newItems[index] = {
-      ...newItems[index],
-      [field]: value
-    }
-
+    newItems[index] = { ...newItems[index], [field]: value }
     setItems(newItems)
-
   }
 
   function removeItem(index: number) {
-
     if (items.length === 1) {
-
-      setItems([
-        { jenis_sampah_id: "", berat: "" }
-      ])
-
+      setItems([{ jenis_sampah_id: "", berat: "" }])
       return
     }
-
-    const newItems = items.filter(
-      (_, i) => i !== index
-    )
-
-    setItems(newItems)
-
+    setItems(items.filter((_, i) => i !== index))
   }
 
   function hitungTotal() {
-
     let total = 0
 
     items.forEach((item) => {
-
       const dataSampah = sampah.find(
         (s) => s.id === item.jenis_sampah_id
       )
 
       if (dataSampah) {
-
         const berat = Number(item.berat || 0)
-
-        const subtotal =
-          Math.round(dataSampah.harga_per_kg * berat)
-
-        total += subtotal
-
+        total += Math.round(dataSampah.harga_per_kg * berat)
       }
-
     })
 
-    const totalNasabah = Math.round(total * 0.6)
-    const totalPengelola = Math.round(total * 0.4)
-
     return {
-      totalNasabah,
-      totalPengelola
+      totalNasabah: Math.round(total * 0.6),
+      totalPengelola: Math.round(total * 0.4)
     }
-
   }
 
-  const {
-    totalNasabah,
-    totalPengelola
-  } = hitungTotal()
+  const { totalNasabah, totalPengelola } = hitungTotal()
 
-  // VALIDASI TRANSAKSI
   function validasiTransaksi() {
-
     if (!nasabahId) {
       alert("Pilih nasabah terlebih dahulu")
       return false
@@ -141,107 +109,101 @@ export default function TransaksiPage() {
     )
 
     if (validItems.length === 0) {
-      alert("Masukkan minimal satu jenis sampah dan berat")
+      alert("Minimal satu item harus diisi")
       return false
     }
 
     return true
-
   }
 
   async function confirmSimpanTransaksi() {
-
-    const nasabahData = nasabah.find(
-      (n) => n.nama === nasabahId
-    )
-
-    if (!nasabahData) {
-      alert("Nasabah tidak ditemukan")
-      return
-    }
-
-    const nasabahRealId = nasabahData.id
-
-    const fixedItems = items.map((item) => {
-
-      const sampahData = sampah.find(
-        (s) => s.nama_sampah === item.jenis_sampah_id
+    try {
+      await simpanTransaksi(
+        nasabahId,
+        items,
+        sampah,
+        totalNasabah,
+        totalPengelola
       )
 
-      if (!sampahData) return item
+      setNasabahId("")
+      setItems([{ jenis_sampah_id: "", berat: "" }])
+      setShowSimpanModal(false)
 
-      return {
-        ...item,
-        jenis_sampah_id: sampahData.id
-      }
-
-    })
-
-    await simpanTransaksi(
-      nasabahRealId,
-      fixedItems,
-      sampah,
-      totalNasabah,
-      totalPengelola
-    )
-
-    setNasabahId("")
-    setItems([{ jenis_sampah_id: "", berat: "" }])
-
-    setShowSimpanModal(false)
-
+    } catch (error) {
+      console.error("Error simpan transaksi:", error)
+      alert("Gagal menyimpan transaksi")
+    }
   }
 
   function handleSimpanClick() {
-
-    const valid = validasiTransaksi()
-
-    if (!valid) return
-
+    if (!validasiTransaksi()) return
     setShowSimpanModal(true)
-
   }
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 px-4 md:px-8 py-6">
 
-    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 p-10">
+      <div className="max-w-5xl mx-auto">
 
-      <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-lg p-8 border border-green-100">
+        <div className="flex items-start gap-3 mb-6">
+          <div className="bg-green-600 text-white p-2 rounded-xl">
+            <Recycle size={20} />
+          </div>
 
-        <h1 className="text-3xl font-bold text-green-800 mb-8">
-          Transaksi Setor Sampah
-        </h1>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold text-green-800">
+              Transaksi Setor Sampah
+            </h1>
+            <p className="text-gray-500 text-sm mt-1">
+              Catat dan kelola transaksi penyetoran sampah nasabah
+            </p>
+          </div>
+        </div>
 
-        <TransaksiForm
-          nasabah={nasabah}
-          nasabahId={nasabahId}
-          setNasabahId={setNasabahId}
-        />
+        <div className="bg-white rounded-2xl shadow-sm border border-green-100 p-5 mb-6">
 
-        {items.map((item, index) => (
-
-          <TransaksiItemRow
-            key={index}
-            item={item}
-            index={index}
-            sampah={sampah}
-            updateItem={updateItem}
-            removeItem={removeItem}
+          <TransaksiForm
+            nasabah={nasabah}
+            nasabahId={nasabahId}
+            setNasabahId={setNasabahId}
           />
 
-        ))}
+          <div className="space-y-3 mt-4">
+            {items.map((item, index) => (
+              <TransaksiItemRow
+                key={index}
+                item={item}
+                index={index}
+                sampah={sampah}
+                updateItem={updateItem}
+                removeItem={removeItem}
+              />
+            ))}
+          </div>
 
-        <button
-          onClick={tambahBaris}
-          className="bg-blue-400 hover:bg-blue-500 text-white px-4 py-2 rounded-lg mb-6"
-        >
-          Tambah Sampah
-        </button>
+          <button
+            onClick={tambahBaris}
+            className="mt-4 inline-flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-xl text-sm"
+          >
+            <Plus size={16} />
+            Tambah Sampah
+          </button>
+
+        </div>
 
         <TransaksiTotal
           totalNasabah={totalNasabah}
           totalPengelola={totalPengelola}
         />
+
+        <button
+          onClick={handleSimpanClick}
+          className="w-full md:w-auto flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold shadow-sm"
+        >
+          <Save size={18} />
+          Simpan Transaksi
+        </button>
 
         <ConfirmModal
           isOpen={showSimpanModal}
@@ -251,17 +213,7 @@ export default function TransaksiPage() {
           onCancel={() => setShowSimpanModal(false)}
         />
 
-        <button
-          onClick={handleSimpanClick}
-          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg"
-        >
-          Simpan Transaksi
-        </button>
-
       </div>
-
     </div>
-
   )
-
 }

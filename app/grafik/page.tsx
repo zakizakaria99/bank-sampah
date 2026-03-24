@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 
 import GrafikTransaksi from "@/components/grafik/GrafikTransaksi"
 import LaporanSampahTable from "@/components/grafik/LaporanSampahTable"
@@ -34,49 +35,26 @@ export default function GrafikPage() {
   }
 
   async function loadGrafik() {
-
     setLoadingGrafik(true)
-
     try {
-
-      const grafik = await getGrafikSemester(
-        tahunGrafik,
-        semester
-      )
-
+      const grafik = await getGrafikSemester(tahunGrafik, semester)
       setGrafikData(grafik)
-
     } catch (err) {
-
       console.error(err)
-
     } finally {
-
       setLoadingGrafik(false)
-
     }
   }
 
   async function loadTabel() {
-
     setLoadingTabel(true)
-
     try {
-
-      const laporan = await getLaporanSampahTahunan(
-        tahunTabel
-      )
-
+      const laporan = await getLaporanSampahTahunan(tahunTabel)
       setLaporanData(laporan)
-
     } catch (err) {
-
       console.error(err)
-
     } finally {
-
       setLoadingTabel(false)
-
     }
   }
 
@@ -90,101 +68,120 @@ export default function GrafikPage() {
 
   return (
 
-    <div className="space-y-8">
+    <div className="px-3 sm:px-6 pb-6 sm:pb-10 space-y-6 sm:space-y-8">
 
-      {/* FILTER GRAFIK */}
+      {/* HEADER */}
+      <div className="space-y-1">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-green-800">
+          Grafik & Analitik
+        </h1>
+        <p className="text-sm sm:text-base text-gray-600">
+          Analisis transaksi dan laporan sampah per periode
+        </p>
+      </div>
 
-      <div className="bg-white border rounded-lg p-4 space-y-4">
+      {/* GRAFIK */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 space-y-5"
+      >
 
-        <h2 className="font-semibold text-lg">
-          Grafik Transaksi
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
 
-        <div className="flex gap-4 items-center">
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+            Grafik Transaksi
+          </h2>
 
-          <div>
-            <label className="text-sm">Tahun</label>
+          {/* FILTER */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
 
-            <select
-              value={tahunGrafik}
-              onChange={(e)=>setTahunGrafik(Number(e.target.value))}
-              className="border rounded px-3 py-2 ml-2"
-            >
+            <div className="flex items-center gap-2">
+              <label className="text-xs sm:text-sm text-gray-500">
+                Tahun
+              </label>
 
-              {tahunList.map((t)=>(
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
+              <select
+                value={tahunGrafik}
+                onChange={(e)=>setTahunGrafik(Number(e.target.value))}
+                className="text-xs sm:text-sm border border-gray-200 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                {tahunList.map((t)=>(
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
 
-            </select>
-          </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs sm:text-sm text-gray-500">
+                Semester
+              </label>
 
-          <div>
-            <label className="text-sm">Semester</label>
+              <select
+                value={semester}
+                onChange={(e)=>setSemester(Number(e.target.value))}
+                className="text-xs sm:text-sm border border-gray-200 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value={1}>Smt 1</option>
+                <option value={2}>Smt 2</option>
+              </select>
+            </div>
 
-            <select
-              value={semester}
-              onChange={(e)=>setSemester(Number(e.target.value))}
-              className="border rounded px-3 py-2 ml-2"
-            >
-
-              <option value={1}>Semester 1</option>
-              <option value={2}>Semester 2</option>
-
-            </select>
           </div>
 
         </div>
 
         {loadingGrafik ? (
-          <div className="text-center py-8">
+          <div className="text-center py-10 text-sm sm:text-base text-gray-500">
             Memuat grafik...
           </div>
         ) : (
           <GrafikTransaksi data={grafikData} />
         )}
 
-      </div>
+      </motion.div>
 
 
-      {/* FILTER TABEL */}
+      {/* TABEL */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 space-y-5"
+      >
 
-      <div className="bg-white border rounded-lg p-4 space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
 
-        <h2 className="font-semibold text-lg">
-          Laporan Sampah Tahunan
-        </h2>
+          <h2 className="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+            Laporan Sampah Tahunan
+          </h2>
 
-        <div>
+          <div className="flex items-center gap-2">
+            <label className="text-xs sm:text-sm text-gray-500">
+              Tahun
+            </label>
 
-          <label className="text-sm">Tahun</label>
-
-          <select
-            value={tahunTabel}
-            onChange={(e)=>setTahunTabel(Number(e.target.value))}
-            className="border rounded px-3 py-2 ml-2"
-          >
-
-            {tahunList.map((t)=>(
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-
-          </select>
+            <select
+              value={tahunTabel}
+              onChange={(e)=>setTahunTabel(Number(e.target.value))}
+              className="text-xs sm:text-sm border border-gray-200 rounded-lg px-2 py-1.5 sm:px-3 sm:py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              {tahunList.map((t)=>(
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
 
         </div>
 
         {loadingTabel ? (
-          <div className="text-center py-8">
+          <div className="text-center py-10 text-sm sm:text-base text-gray-500">
             Memuat laporan...
           </div>
         ) : (
           <LaporanSampahTable data={laporanData} />
         )}
 
-      </div>
+      </motion.div>
 
     </div>
 

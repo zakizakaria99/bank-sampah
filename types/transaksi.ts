@@ -26,13 +26,13 @@ export interface Transaksi {
 export interface DetailTransaksi {
   id: string
   transaksi_id: string
-  jenis_sampah_id: string
+  jenis_sampah_id?: string // ✅ optional (tidak selalu ada dari query)
   berat: number
   harga: number
   subtotal: number
   jenis_sampah: {
     nama_sampah: string
-  }
+  }[] // ✅ FIX: array sesuai Supabase
 }
 
 export interface PenarikanSaldo {

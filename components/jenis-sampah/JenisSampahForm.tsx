@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Plus, Save, X } from "lucide-react"
 
 interface Props {
   nama: string
@@ -25,99 +26,87 @@ export default function JenisSampahForm({
   const [error, setError] = useState("")
 
   const handleHargaChange = (value: string) => {
-
     if (value === "") {
       setHarga("")
       return
     }
 
-    const normalized = value.replace(",", ".")
-    const angka = Number(normalized)
-
+    const angka = Number(value.replace(",", "."))
     if (!isNaN(angka)) {
       setHarga(angka)
     }
-
   }
 
   function handleSubmit() {
-
-    // VALIDASI NAMA
     if (!nama.trim()) {
       setError("Nama sampah wajib diisi.")
       return
     }
 
-    // VALIDASI HARGA
     if (harga === "" || harga <= 0) {
-      setError("Harga per kg harus diisi dan lebih dari 0.")
+      setError("Harga harus lebih dari 0.")
       return
     }
 
     setError("")
-
-    // KONFIRMASI
-    const confirm = window.confirm(
-      editId
-        ? "Apakah yakin ingin memperbarui jenis sampah?"
-        : "Apakah yakin ingin menambahkan jenis sampah?"
-    )
-
-    if (!confirm) return
-
     simpan()
   }
 
   return (
+    <div className="flex flex-col gap-4">
 
-    <div className="grid grid-cols-2 gap-4 mb-6">
+      {/* INPUT */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
-      <input
-        className="border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Nama Sampah"
-        value={nama}
-        onChange={(e) => setNama(e.target.value)}
-      />
+        <input
+          className="border border-green-200 rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-400"
+          placeholder="Nama Sampah"
+          value={nama}
+          onChange={(e) => setNama(e.target.value)}
+        />
 
-      <input
-        type="number"
-        step="0.01"
-        min="0"
-        className="border border-green-200 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-green-400"
-        placeholder="Harga per Kg"
-        value={harga === "" ? "" : harga}
-        onChange={(e) => handleHargaChange(e.target.value)}
-      />
+        <input
+          type="number"
+          className="border border-green-200 rounded-xl p-3 md:p-4 text-sm md:text-base focus:outline-none focus:ring-2 focus:ring-green-400"
+          placeholder="Harga per Kg"
+          value={harga === "" ? "" : harga}
+          onChange={(e) => handleHargaChange(e.target.value)}
+        />
 
+      </div>
+
+      {/* ERROR */}
       {error && (
-        <div className="col-span-2 text-red-500 text-sm">
+        <p className="text-xs md:text-sm text-red-500">
           {error}
-        </div>
+        </p>
       )}
 
-      <div className="col-span-2 flex gap-3">
+      {/* BUTTON */}
+      <div className="flex flex-wrap gap-3">
 
         <button
           type="button"
           onClick={handleSubmit}
-          className="bg-green-500 hover:bg-green-600 text-white font-semibold px-6 py-2 rounded-lg"
+          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-xl text-sm md:text-base font-semibold shadow-sm"
         >
-          {editId ? "Update Sampah" : "Tambah Sampah"}
+          {editId ? <Save size={16} /> : <Plus size={16} />}
+          {editId ? "Update" : "Tambah"}
         </button>
 
         {editId && (
           <button
             type="button"
             onClick={onCancelEdit}
-            className="bg-gray-400 hover:bg-gray-500 text-white px-6 py-2 rounded-lg"
+            className="flex items-center gap-2 bg-gray-400 hover:bg-gray-500 text-white px-5 py-2.5 rounded-xl text-sm md:text-base"
           >
-            Cancel
+            <X size={16} />
+            Batal
           </button>
         )}
 
       </div>
 
     </div>
-
   )
 }

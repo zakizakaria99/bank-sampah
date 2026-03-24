@@ -10,109 +10,85 @@ function formatRupiah(value: number) {
   return "Rp " + value.toLocaleString("id-ID")
 }
 
+// ✅ FIX FLOATING POINT KG
+function formatKg(value: number) {
+  return new Intl.NumberFormat("id-ID", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(value)
+}
+
 export default function LaporanSampahTable({ data }: Props) {
 
   const totalKg = data.reduce((a, b) => a + b.total_kg, 0)
   const totalHarga = data.reduce((a, b) => a + b.total_harga, 0)
 
   return (
+    <div className="w-full overflow-x-auto">
 
-    <div className="bg-white border border-gray-200 rounded-lg p-4 overflow-x-auto">
+      <table className="min-w-[900px] w-full text-xs sm:text-sm">
 
-      <h2 className="text-lg font-semibold mb-4">
-        Laporan Sampah Per Bulan
-      </h2>
-
-      <table className="w-full text-sm">
-
-        <thead className="bg-green-100">
-
+        <thead className="bg-green-100 text-gray-700">
           <tr>
+            <th className="p-3 text-left">Nama Sampah</th>
 
-            <th className="p-2 text-left">Nama Sampah</th>
-
-            <th className="p-2">Jan</th>
-            <th className="p-2">Feb</th>
-            <th className="p-2">Mar</th>
-            <th className="p-2">Apr</th>
-            <th className="p-2">Mei</th>
-            <th className="p-2">Jun</th>
-            <th className="p-2">Jul</th>
-            <th className="p-2">Agu</th>
-            <th className="p-2">Sep</th>
-            <th className="p-2">Okt</th>
-            <th className="p-2">Nov</th>
-            <th className="p-2">Des</th>
+            {["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"].map((m)=>(
+              <th key={m} className="p-2 text-center">{m}</th>
+            ))}
 
             <th className="p-2">Total (Kg)</th>
             <th className="p-2">Total Harga</th>
-
           </tr>
-
         </thead>
 
         <tbody>
-
           {data.map((row) => (
+            <tr key={row.nama_sampah} className="border-b hover:bg-gray-50 transition">
 
-            <tr key={row.nama_sampah} className="border-b">
-
-              <td className="p-2 font-medium">
+              <td className="p-3 font-medium text-gray-800">
                 {row.nama_sampah}
               </td>
 
-              <td className="p-2 text-center">{row.Jan}</td>
-              <td className="p-2 text-center">{row.Feb}</td>
-              <td className="p-2 text-center">{row.Mar}</td>
-              <td className="p-2 text-center">{row.Apr}</td>
-              <td className="p-2 text-center">{row.Mei}</td>
-              <td className="p-2 text-center">{row.Jun}</td>
-              <td className="p-2 text-center">{row.Jul}</td>
-              <td className="p-2 text-center">{row.Agu}</td>
-              <td className="p-2 text-center">{row.Sep}</td>
-              <td className="p-2 text-center">{row.Okt}</td>
-              <td className="p-2 text-center">{row.Nov}</td>
-              <td className="p-2 text-center">{row.Des}</td>
+              {[
+                row.Jan,row.Feb,row.Mar,row.Apr,row.Mei,row.Jun,
+                row.Jul,row.Agu,row.Sep,row.Okt,row.Nov,row.Des
+              ].map((val,i)=>(
+                <td key={i} className="p-2 text-center text-gray-600">
+                  {val}
+                </td>
+              ))}
 
-              <td className="p-2 text-center font-semibold">
-                {row.total_kg}
+              {/* ✅ FIX */}
+              <td className="p-2 text-center font-semibold text-green-700">
+                {formatKg(row.total_kg)}
               </td>
 
-              <td className="p-2 text-center font-semibold">
+              <td className="p-2 text-center font-semibold text-green-700">
                 {formatRupiah(row.total_harga)}
               </td>
 
             </tr>
-
           ))}
-
         </tbody>
 
         <tfoot className="bg-green-50 font-semibold">
-
           <tr>
-
-            <td className="p-2">
-              TOTAL
-            </td>
-
+            <td className="p-3">TOTAL</td>
             <td colSpan={12}></td>
 
-            <td className="p-2 text-center">
-              {totalKg}
+            {/* ✅ FIX */}
+            <td className="p-2 text-center text-green-800">
+              {formatKg(totalKg)}
             </td>
 
-            <td className="p-2 text-center">
+            <td className="p-2 text-center text-green-800">
               {formatRupiah(totalHarga)}
             </td>
-
           </tr>
-
         </tfoot>
 
       </table>
 
     </div>
-
   )
 }

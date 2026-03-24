@@ -24,33 +24,33 @@ export default function LaporanKasTable({ data }: Props) {
 
   return (
 
-    <div className="max-w-5xl mx-auto bg-white rounded-xl shadow-md p-6 space-y-4">
+    <div className="max-w-5xl mx-auto bg-white rounded-2xl shadow-sm p-4 md:p-6 space-y-4">
 
-      <h2 className="text-xl font-semibold text-green-800">
+      <h2 className="text-lg md:text-xl lg:text-2xl font-semibold text-green-800">
         Laporan Kas
       </h2>
 
-      <div className="overflow-hidden rounded-lg border border-green-100">
+      <div className="overflow-x-auto rounded-xl border border-green-100">
 
-        <table className="w-full">
+        <table className="w-full min-w-[600px]">
 
-          <thead className="bg-green-100 text-green-900">
+          <thead className="bg-green-100 text-green-900 text-xs md:text-sm">
 
             <tr>
-              <th className="p-4 text-left">Tanggal</th>
-              <th className="p-4 text-left">Keterangan</th>
-              <th className="p-4 text-left">Pemasukan</th>
-              <th className="p-4 text-left">Pengeluaran</th>
-              <th className="p-4 text-left">Saldo</th>
+              <th className="p-3 md:p-4 text-left">Tanggal</th>
+              <th className="p-3 md:p-4 text-left">Keterangan</th>
+              <th className="p-3 md:p-4 text-left">Masuk</th>
+              <th className="p-3 md:p-4 text-left">Keluar</th>
+              <th className="p-3 md:p-4 text-left">Saldo</th>
             </tr>
 
           </thead>
 
-          <tbody>
+          <tbody className="text-sm md:text-base">
 
             {data.length === 0 && (
               <tr>
-                <td colSpan={5} className="p-4 text-center text-gray-500">
+                <td colSpan={5} className="p-4 text-center text-gray-500 text-sm">
                   Belum ada data kas
                 </td>
               </tr>
@@ -63,23 +63,23 @@ export default function LaporanKasTable({ data }: Props) {
                 className="border-t hover:bg-green-50 transition"
               >
 
-                <td className="p-4">
+                <td className="p-3 md:p-4 whitespace-nowrap">
                   {new Date(item.tanggal).toLocaleDateString("id-ID")}
                 </td>
 
-                <td className="p-4">
+                <td className="p-3 md:p-4">
                   {item.keterangan}
                 </td>
 
-                <td className="p-4 text-green-600 font-semibold">
+                <td className="p-3 md:p-4 text-green-600 font-semibold">
                   {formatRupiah(item.pemasukan)}
                 </td>
 
-                <td className="p-4 text-red-600 font-semibold">
+                <td className="p-3 md:p-4 text-red-600 font-semibold">
                   {formatRupiah(item.pengeluaran)}
                 </td>
 
-                <td className="p-4 font-semibold">
+                <td className="p-3 md:p-4 font-semibold">
                   {formatRupiah(item.saldo)}
                 </td>
 
@@ -96,4 +96,5 @@ export default function LaporanKasTable({ data }: Props) {
     </div>
 
   )
+
 }

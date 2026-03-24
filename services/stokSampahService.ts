@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { supabase } from "@/lib/supabase"
 
 export async function getStokSampah() {
@@ -21,7 +23,7 @@ export async function getRiwayatPenjualan(page: number) {
   const { data, error, count } = await supabase
     .from("penjualan")
     .select("*", { count: "exact" })
-    .order("tanggal", { ascending: false })
+    .order("created_at", { ascending: false }) // ✅ FIX DI SINI
     .range(from, to)
 
   if (error) {

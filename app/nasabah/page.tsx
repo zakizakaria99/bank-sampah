@@ -5,7 +5,6 @@ import { Nasabah } from "@/types/nasabah"
 
 import NasabahForm from "@/components/nasabah/NasabahForm"
 import NasabahTable from "@/components/nasabah/NasabahTable"
-
 import StatCard from "@/components/ui/StatCard"
 
 import {
@@ -26,9 +25,8 @@ export default function NasabahPage() {
   const [editId, setEditId] = useState<string | null>(null)
 
   const [search, setSearch] = useState("")
-  
-  async function loadNasabah() {
 
+  async function loadNasabah() {
     const data = await getNasabah()
 
     const sorted = [...data].sort((a, b) =>
@@ -41,21 +39,17 @@ export default function NasabahPage() {
   async function simpanNasabah() {
 
     if (editId) {
-
       await updateNasabah(editId, {
         nama,
         alamat,
         no_hp: noHp
       })
-
     } else {
-
       await tambahNasabah({
         nama,
         alamat,
         no_hp: noHp
       })
-
     }
 
     cancelEdit()
@@ -76,8 +70,12 @@ export default function NasabahPage() {
     setEditId(null)
   }
 
+  // ✅ FIX DI SINI (tanpa ubah logic)
   useEffect(() => {
-    loadNasabah()
+    const init = async () => {
+      await loadNasabah()
+    }
+    init()
   }, [])
 
   const filteredNasabah = nasabah.filter((n) =>
@@ -92,10 +90,10 @@ export default function NasabahPage() {
       <div className="max-w-6xl mx-auto w-full space-y-6">
 
         {/* HEADER */}
-
         <div className="flex items-center gap-3">
-
-          <Users className="text-green-600 w-8 h-8" />
+          <div className="bg-green-600 text-white p-2 rounded-xl">
+            <Users size={20} />
+          </div>
 
           <div>
             <h1 className="text-2xl md:text-3xl font-bold text-green-800">
@@ -105,29 +103,19 @@ export default function NasabahPage() {
               Kelola data nasabah bank sampah
             </p>
           </div>
-
         </div>
 
-
-        {/* STAT CARD */}
-
+        {/* STAT */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
           <StatCard
             title="Total Nasabah"
             value={nasabah.length}
-            color="bg-green-500"
+            icon={Users}
           />
-
         </div>
 
-
-        {/* MAIN CARD */}
-
-        <div className="bg-white rounded-2xl shadow-lg p-4 md:p-8 border border-green-100 space-y-6">
-
-
-          {/* FORM */}
+        {/* FORM */}
+        <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-green-100">
 
           <NasabahForm
             nama={nama}
@@ -141,11 +129,13 @@ export default function NasabahPage() {
             onCancelEdit={cancelEdit}
           />
 
+        </div>
+
+        {/* LIST */}
+        <div className="bg-white rounded-2xl shadow-sm p-4 md:p-6 border border-green-100 space-y-4">
 
           {/* SEARCH */}
-
           <div className="relative">
-
             <Search className="absolute left-3 top-3.5 w-4 h-4 text-gray-400" />
 
             <input
@@ -153,13 +143,9 @@ export default function NasabahPage() {
               placeholder="Cari nasabah (nama / no hp)..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="border border-green-200 rounded-lg p-3 pl-9 w-full focus:outline-none focus:ring-2 focus:ring-green-400"
+              className="border border-green-200 rounded-xl p-3 pl-9 w-full focus:outline-none focus:ring-2 focus:ring-green-400"
             />
-
           </div>
-
-
-          {/* TABLE */}
 
           <NasabahTable
             data={filteredNasabah}
@@ -171,6 +157,5 @@ export default function NasabahPage() {
       </div>
 
     </div>
-
   )
 }

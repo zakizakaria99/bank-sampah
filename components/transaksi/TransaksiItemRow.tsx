@@ -1,17 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client"
 
-import { useState, useEffect } from "react"
+
+
+import { useState } from "react"
+import { Trash2 } from "lucide-react"
 import { Sampah, ItemTransaksi } from "@/types/transaksi"
 
 interface Props {
   item: ItemTransaksi
   index: number
   sampah: Sampah[]
-  updateItem: (
-    index: number,
-    field: keyof ItemTransaksi,
-    value: string | number | ""
-  ) => void
+  updateItem: (index: number, field: keyof ItemTransaksi, value: any) => void
   removeItem: (index: number) => void
 }
 
@@ -27,24 +28,16 @@ export default function TransaksiItemRow({
     (s) => s.id === item.jenis_sampah_id
   )
 
-  const [namaInput, setNamaInput] = useState("")
+  // ✅ langsung ambil dari data (tanpa useEffect)
+  const [namaInput, setNamaInput] = useState(
+    dataSampah?.nama_sampah || ""
+  )
 
-  useEffect(() => {
-
-  if (dataSampah) {
-    setNamaInput(dataSampah.nama_sampah)
-  } else {
-    setNamaInput("")
-  }
-
-}, [item.jenis_sampah_id])
   const harga = dataSampah?.harga_per_kg || 0
   const berat = Number(item.berat || 0)
-
   const subtotal = Math.round(harga * berat)
 
   function handleSampahChange(value: string) {
-
     setNamaInput(value)
 
     const found = sampah.find(
@@ -54,90 +47,66 @@ export default function TransaksiItemRow({
     if (found) {
       updateItem(index, "jenis_sampah_id", found.id)
     }
-
   }
 
   function handleBeratChange(value: string) {
-
     if (value === "") {
       updateItem(index, "berat", "")
       return
     }
 
-    const normalized = value.replace(",", ".")
-    const angka = Number(normalized)
-
+    const angka = Number(value.replace(",", "."))
     if (!isNaN(angka)) {
       updateItem(index, "berat", angka)
     }
-
   }
 
   return (
+    <div className="border border-green-100 rounded-xl p-3 md:p-4 bg-green-50">
 
-    <div className="grid grid-cols-5 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-sm md:text-base">
 
-      {/* Jenis Sampah */}
+        <input
+          list={`sampah-list-${index}`}
+          placeholder="Jenis sampah"
+          className="border border-green-200 rounded-lg p-2 md:p-3 text-sm md:text-base"
+          value={namaInput}
+          onChange={(e) => handleSampahChange(e.target.value)}
+        />
 
-      <input
-        list={`sampah-list-${index}`}
-        placeholder="Ketik jenis sampah..."
-        className="border border-green-200 rounded-lg p-3"
-        value={namaInput}
-        onChange={(e) => handleSampahChange(e.target.value)}
-      />
+        <datalist id={`sampah-list-${index}`}>
+          {sampah.map((s) => (
+            <option key={s.id} value={s.nama_sampah} />
+          ))}
+        </datalist>
 
-      <datalist id={`sampah-list-${index}`}>
+        <input
+          type="number"
+          placeholder="Berat (kg)"
+          className="border border-green-200 rounded-lg p-2 md:p-3 text-sm md:text-base"
+          value={item.berat === "" ? "" : item.berat}
+          onChange={(e) => handleBeratChange(e.target.value)}
+        />
 
-        {sampah.map((s) => (
+        <div className="flex items-center text-sm md:text-base">
+          Rp {harga.toLocaleString("id-ID")}
+        </div>
 
-          <option
-            key={s.id}
-            value={s.nama_sampah}
-          />
+        <div className="flex items-center justify-between md:justify-end gap-3">
+          <span className="font-semibold text-sm md:text-base">
+            Rp {subtotal.toLocaleString("id-ID")}
+          </span>
 
-        ))}
+          <button
+            onClick={() => removeItem(index)}
+            className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg"
+          >
+            <Trash2 size={16} />
+          </button>
+        </div>
 
-      </datalist>
-
-      {/* Berat */}
-
-      <input
-        type="number"
-        step="0.01"
-        min="0"
-        placeholder="Berat (kg)"
-        className="border border-green-200 rounded-lg p-3"
-        value={item.berat === "" ? "" : item.berat}
-        onChange={(e) =>
-          handleBeratChange(e.target.value)
-        }
-      />
-
-      {/* Harga */}
-
-      <div className="flex items-center">
-        Rp {harga.toLocaleString("id-ID")}
       </div>
-
-      {/* Subtotal */}
-
-      <div className="flex items-center font-semibold">
-        Rp {subtotal.toLocaleString("id-ID")}
-      </div>
-
-      {/* Hapus */}
-
-      <button
-        type="button"
-        onClick={() => removeItem(index)}
-        className="bg-red-400 hover:bg-red-500 text-white px-3 py-2 rounded"
-      >
-        Hapus
-      </button>
 
     </div>
-
   )
-
 }

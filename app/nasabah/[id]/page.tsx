@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useParams } from "next/navigation"
 
 import ConfirmModal from "@/components/ui/ConfirmModal"
@@ -19,38 +19,44 @@ import {
   cancelPenarikan
 } from "@/services/nasabahService"
 
+import { getKasBersih } from "@/services/laporanService"
+
 import {
   getRiwayatSetorNasabah,
   getDetailSetor
 } from "@/services/transaksiService"
 
-import {
-  User,
-  Wallet,
-  Recycle,
-  ArrowDownCircle,
-  ChevronLeft,
-  ChevronRight
-} from "lucide-react"
+import { User, Wallet } from "lucide-react"
+
+import { Nasabah } from "@/types/nasabah"
+import { Transaksi, DetailTransaksi } from "@/types/transaksi"
 
 export default function NasabahDetailPage() {
-
   const params = useParams()
   const nasabahId = params?.id as string
 
-  const [nasabah, setNasabah] = useState<any>(null)
+  const [nasabah, setNasabah] = useState<Nasabah | null>(null)
   const [saldo, setSaldo] = useState(0)
+  const [saldoPengelola, setSaldoPengelola] = useState(0)
 
-  const [riwayat, setRiwayat] = useState<any[]>([])
-  const [setor, setSetor] = useState<any[]>([])
+  // ✅ FIX TYPE
+  type Penarikan = {
+    id: string
+    jumlah: number
+    created_at: string
+  }
 
-  const [detailSetor, setDetailSetor] = useState<any[]>([])
+  const [riwayat, setRiwayat] = useState<Penarikan[]>([])
+  const [setor, setSetor] = useState<Transaksi[]>([])
+  const [detailSetor, setDetailSetor] = useState<DetailTransaksi[]>([])
+
   const [openTransaksi, setOpenTransaksi] = useState<string | null>(null)
 
   const [jumlahTarik, setJumlahTarik] = useState("")
-
   const [showTarikModal, setShowTarikModal] = useState(false)
+
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showFinalCancelModal, setShowFinalCancelModal] = useState(false)
   const [cancelId, setCancelId] = useState<string | null>(null)
 
   const [page, setPage] = useState(1)
@@ -62,277 +68,199 @@ export default function NasabahDetailPage() {
   const limit = 10
   const limitSetor = 10
 
-  useEffect(() => {
-
+  const loadNasabah = useCallback(async () => {
     if (!nasabahId) return
-
-    loadNasabah()
-    loadPenarikan()
-    loadSetor()
-
-  }, [page, pageSetor, nasabahId])
-
-  async function loadNasabah() {
 
     const detail = await getDetailNasabah(nasabahId)
     const saldoData = await getSaldoNasabah(nasabahId)
+    const kas = await getKasBersih()
 
     setNasabah(detail)
     setSaldo(saldoData)
+    setSaldoPengelola(kas)
+  }, [nasabahId])
 
-  }
+  const loadPenarikan = useCallback(async () => {
+    if (!nasabahId) return
 
-  async function loadPenarikan() {
-
-    const result = await getRiwayatPenarikan(
-      nasabahId,
-      page,
-      limit
-    )
-
+    const result = await getRiwayatPenarikan(nasabahId, page, limit)
     setRiwayat(result?.data || [])
     setTotalData(result?.total || 0)
+  }, [nasabahId, page])
 
-  }
+  const loadSetor = useCallback(async () => {
+    if (!nasabahId) return
 
-  async function loadSetor() {
-
-    const result = await getRiwayatSetorNasabah(
-      nasabahId,
-      pageSetor,
-      limitSetor
-    )
-
+    const result = await getRiwayatSetorNasabah(nasabahId, pageSetor, limitSetor)
     setSetor(result?.data || [])
     setTotalSetor(result?.total || 0)
+  }, [nasabahId, pageSetor])
 
-  }
+  useEffect(() => {
+    if (!nasabahId) return
+
+    const fetchData = async () => {
+      await loadNasabah()
+      await loadPenarikan()
+      await loadSetor()
+    }
+
+    fetchData()
+  }, [nasabahId, page, pageSetor, loadNasabah, loadPenarikan, loadSetor])
 
   async function handleOpenDetail(id: string) {
-
     if (openTransaksi === id) {
       setOpenTransaksi(null)
       return
     }
 
     const data = await getDetailSetor(id)
-
     setDetailSetor(data || [])
     setOpenTransaksi(id)
-
   }
 
   async function confirmTarikSaldo() {
-
     const jumlah = Number(jumlahTarik)
 
     if (!jumlah) return
 
     if (jumlah > saldo) {
-      alert("Saldo tidak cukup")
+      alert("Saldo nasabah tidak cukup")
       return
     }
 
-    await tarikSaldo(nasabahId, jumlah)
+    if (jumlah > saldoPengelola) {
+      alert("Kas tidak mencukupi")
+      return
+    }
 
-    setShowTarikModal(false)
-    setJumlahTarik("")
+    try {
+      await tarikSaldo(nasabahId, jumlah)
 
-    loadNasabah()
-    loadPenarikan()
+      setShowTarikModal(false)
+      setJumlahTarik("")
 
+      await loadNasabah()
+      await loadPenarikan()
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        alert(err.message)
+      } else {
+        alert("Terjadi kesalahan")
+      }
+    }
   }
 
   async function confirmCancelPenarikan() {
-
     if (!cancelId) return
 
     await cancelPenarikan(cancelId)
 
-    setShowCancelModal(false)
+    setShowFinalCancelModal(false)
     setCancelId(null)
 
-    loadPenarikan()
-
+    await loadPenarikan()
+    await loadNasabah()
   }
-
-  const totalPage = Math.ceil(totalData / limit) || 1
-  const totalPageSetor = Math.ceil(totalSetor / limitSetor) || 1
 
   if (!nasabah) return null
 
   return (
+    <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 px-4 md:px-6 py-6 md:py-10">
+      <div className="max-w-5xl mx-auto space-y-6">
 
-  <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 px-4 md:px-6 py-6 md:py-10">
+        <div className="flex items-center gap-3">
+          <User className="text-green-600 w-7 h-7"/>
+          <h1 className="text-2xl md:text-3xl font-bold text-green-800">
+            Detail Nasabah
+          </h1>
+        </div>
 
-  <div className="max-w-5xl mx-auto space-y-6">
+        <div className="bg-white rounded-2xl shadow-lg p-5 md:p-8 border border-green-100 space-y-8">
 
-  {/* HEADER */}
+          <NasabahInfo nasabah={nasabah} />
+          <SaldoCard saldo={saldo} />
 
-  <div className="flex items-center gap-3">
+          <div className="text-sm text-gray-600">
+            Kas tersedia:{" "}
+            <span className="font-semibold text-green-700">
+              Rp {saldoPengelola.toLocaleString("id-ID")}
+            </span>
+          </div>
 
-    <User className="text-green-600 w-7 h-7"/>
+          <div className="border border-green-200 rounded-xl p-5 bg-green-50">
+            <TarikSaldoForm
+              jumlahTarik={jumlahTarik}
+              setJumlahTarik={setJumlahTarik}
+              openModal={() => setShowTarikModal(true)}
+            />
+          </div>
 
-    <h1 className="text-2xl md:text-3xl font-bold text-green-800">
-      Detail Nasabah
-    </h1>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Wallet className="text-green-600"/>
+              <h2 className="text-lg font-semibold text-green-800">
+                Riwayat Penarikan
+              </h2>
+            </div>
 
-  </div>
+            <RiwayatPenarikanTable
+              data={riwayat}
+              onCancel={(id) => {
+                setCancelId(id)
+                setShowCancelModal(true)
+              }}
+            />
+          </div>
 
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Wallet className="text-green-600"/>
+              <h2 className="text-lg font-semibold text-green-800">
+                Riwayat Setoran
+              </h2>
+            </div>
 
-  {/* CARD UTAMA */}
+            <RiwayatSetorTable
+              setor={setor}
+              detailSetor={detailSetor}
+              openTransaksi={openTransaksi}
+              onOpen={handleOpenDetail}
+            />
+          </div>
 
-  <div className="bg-white rounded-2xl shadow-lg p-5 md:p-8 border border-green-100 space-y-8">
+        </div>
 
-    <NasabahInfo nasabah={nasabah} />
+        <ConfirmModal
+          isOpen={showTarikModal}
+          title="Konfirmasi Tarik Saldo"
+          message={`Yakin menarik Rp ${Number(jumlahTarik || 0).toLocaleString("id-ID")} ?`}
+          onConfirm={confirmTarikSaldo}
+          onCancel={() => setShowTarikModal(false)}
+        />
 
-    <SaldoCard saldo={saldo} />
+        <ConfirmModal
+          isOpen={showCancelModal}
+          variant="danger"
+          title="Batalkan Penarikan"
+          message="Apakah Anda yakin ingin membatalkan transaksi ini?"
+          onConfirm={async () => {
+            setShowCancelModal(false)
+            setTimeout(() => setShowFinalCancelModal(true), 200)
+          }}
+          onCancel={() => setShowCancelModal(false)}
+        />
 
-{/* CARD TARIK SALDO */}
-
-<div className="border border-green-200 rounded-xl p-5 bg-green-50">
-
-  <TarikSaldoForm
-    jumlahTarik={jumlahTarik}
-    setJumlahTarik={setJumlahTarik}
-    openModal={() => setShowTarikModal(true)}
-  />
-
-</div>
-
-
-
-    {/* =========================
-        RIWAYAT PENARIKAN
-    ========================= */}
-
-    <div className="space-y-4">
-
-      <div className="flex items-center gap-2">
-
-        <Wallet className="text-green-600"/>
-
-        <h2 className="text-lg font-semibold text-green-800">
-          Riwayat Penarikan
-        </h2>
+        <ConfirmModal
+          isOpen={showFinalCancelModal}
+          variant="danger"
+          title="Konfirmasi Akhir"
+          message="Tindakan ini tidak dapat dibatalkan."
+          onConfirm={confirmCancelPenarikan}
+          onCancel={() => setShowFinalCancelModal(false)}
+        />
 
       </div>
-
-      <RiwayatPenarikanTable
-        data={riwayat}
-        onCancel={(id) => {
-          setCancelId(id)
-          setShowCancelModal(true)
-        }}
-      />
-
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-
-        <button
-          disabled={page === 1}
-          onClick={() => setPage(page - 1)}
-          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          <ChevronLeft size={16}/>
-          Prev
-        </button>
-
-        <span className="text-sm">
-          Halaman {page} / {totalPage}
-        </span>
-
-        <button
-          disabled={page === totalPage}
-          onClick={() => setPage(page + 1)}
-          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          Next
-          <ChevronRight size={16}/>
-        </button>
-
-      </div>
-
     </div>
-
-
-    {/* =========================
-        RIWAYAT SETOR
-    ========================= */}
-
-    <div className="space-y-4">
-
-      <div className="flex items-center gap-2">
-
-        <Recycle className="text-green-600"/>
-
-        <h2 className="text-lg font-semibold text-green-800">
-          Riwayat Setor Sampah
-        </h2>
-
-      </div>
-
-      <RiwayatSetorTable
-        setor={setor}
-        detailSetor={detailSetor}
-        openTransaksi={openTransaksi}
-        onOpen={handleOpenDetail}
-      />
-
-      <div className="flex flex-col md:flex-row items-center justify-center gap-4">
-
-        <button
-          disabled={pageSetor === 1}
-          onClick={() => setPageSetor(pageSetor - 1)}
-          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          <ChevronLeft size={16}/>
-          Prev
-        </button>
-
-        <span className="text-sm">
-          Halaman {pageSetor} / {totalPageSetor}
-        </span>
-
-        <button
-          disabled={pageSetor === totalPageSetor}
-          onClick={() => setPageSetor(pageSetor + 1)}
-          className="flex items-center gap-1 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 disabled:opacity-50"
-        >
-          Next
-          <ChevronRight size={16}/>
-        </button>
-
-      </div>
-
-    </div>
-
-  </div>
-
-
-  {/* MODAL TARIK SALDO */}
-
-  <ConfirmModal
-    isOpen={showTarikModal}
-    title="Konfirmasi Tarik Saldo"
-    message={`Yakin menarik Rp ${Number(jumlahTarik || 0).toLocaleString("id-ID")} ?`}
-    onConfirm={confirmTarikSaldo}
-    onCancel={() => setShowTarikModal(false)}
-  />
-
-  {/* MODAL CANCEL */}
-
-  <ConfirmModal
-    isOpen={showCancelModal}
-    title="Batalkan Penarikan"
-    message="Yakin membatalkan penarikan ini?"
-    onConfirm={confirmCancelPenarikan}
-    onCancel={() => setShowCancelModal(false)}
-  />
-
-</div>
-
-</div>
-
-)
-
+  )
 }

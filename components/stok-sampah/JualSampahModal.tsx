@@ -1,8 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { createPenjualan } from "@/services/stokSampahService"
 import { StokSampah } from "@/types/stokSampah"
+import ConfirmModal from "@/components/ui/ConfirmModal"
 
 interface ItemJual {
   jenis_sampah_id: string
@@ -28,20 +31,30 @@ export default function JualSampahModal({
 
   const [items, setItems] = useState<ItemJual[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
   const [displayHarga, setDisplayHarga] = useState<{ [key:number]: string }>({})
-const formatNumber = (value: string) => {
-  const number = value.replace(/\D/g, "")
-  return new Intl.NumberFormat("id-ID").format(Number(number))
-}
+  const [openConfirm, setOpenConfirm] = useState(false)
 
-const parseNumber = (value: string) => {
-  return Number(value.replace(/\D/g, ""))
-}
+  const [search, setSearch] = useState<{ [key:number]: string }>({})
+  const [showSugest, setShowSugest] = useState<{ [key:number]: boolean }>({})
+
+  useEffect(() => {
+    if (open) {
+      setError("")
+    }
+  }, [open])
+
   if (!open) return null
 
+  const formatNumber = (value: string) =>
+    new Intl.NumberFormat("id-ID").format(Number(value))
+
+  const parseNumber = (value: string) =>
+    Number(value.replace(/\D/g, ""))
+
   const tambahItem = () => {
-    setItems([
-      ...items,
+    setItems(prev => [
+      ...prev,
       {
         jenis_sampah_id: "",
         nama_sampah: "",
@@ -53,14 +66,10 @@ const parseNumber = (value: string) => {
   }
 
   const updateItem = (index: number, field: string, value: any) => {
-
     const newItems = [...items]
 
     if (field === "jenis_sampah_id") {
-
-      const selected = stokData.find(
-        s => s.jenis_sampah_id === value
-      )
+      const selected = stokData.find(s => s.jenis_sampah_id === value)
 
       if (selected) {
         newItems[index] = {
@@ -70,283 +79,323 @@ const parseNumber = (value: string) => {
           harga_nasabah: selected.harga_per_kg
         }
       }
-
     } else {
-
       newItems[index] = {
         ...newItems[index],
         [field]: value === "" ? 0 : Number(value)
       }
-
     }
 
     setItems(newItems)
   }
 
   const hapusItem = (index: number) => {
-    setItems(items.filter((_, i) => i !== index))
+    setItems(prev => prev.filter((_, i) => i !== index))
   }
 
-  const totalPenjualan = items.reduce((sum, i) => {
-    return sum + (i.berat * i.harga_jual)
-  }, 0)
+  const totalPenjualan = items.reduce(
+    (sum, i) => sum + i.berat * i.harga_jual,
+    0
+  )
 
-  const totalNilaiBeli = items.reduce((sum, i) => {
-    return sum + (i.berat * i.harga_nasabah)
-  }, 0)
+  const totalModal = items.reduce(
+    (sum, i) => sum + i.berat * i.harga_nasabah,
+    0
+  )
 
-  const labaRugi = totalPenjualan - totalNilaiBeli
+  const labaRugi = totalPenjualan - totalModal
 
+  const handleSubmit = () => {
+  if (loading || openConfirm) return
 
-  const validasiStok = () => {
-
-    for (const item of items) {
-
-      const stokItem = stokData.find(
-        s => s.jenis_sampah_id === item.jenis_sampah_id
-      )
-
-      if (!stokItem) continue
-
-      if (item.berat > stokItem.stok) {
-
-        alert(
-          `Stok ${stokItem.nama_sampah} tidak cukup.
-Stok tersedia ${stokItem.stok} kg`
-        )
-
-        return false
-      }
-
-    }
-
-    return true
+  if (items.length === 0) {
+    setError("Tambahkan minimal 1 item")
+    return
   }
 
+  // ✅ INI YANG PENTING (penyebab error kamu)
+  if (items.some(i => !i.jenis_sampah_id)) {
+    setError("Pilih jenis sampah dari daftar (klik sugest)")
+    return
+  }
 
-  const handleSubmit = async () => {
+  if (items.some(i => i.berat <= 0 || i.harga_jual <= 0)) {
+    setError("Berat & harga harus valid")
+    return
+  }
+// 🔥 VALIDASI FINAL (ANTI TEMBUS KE BACKEND)
+for (const item of items) {
+  const stok = stokData.find(
+    s => s.jenis_sampah_id === item.jenis_sampah_id
+  )
 
-    if (items.length === 0) return
+  if (stok && item.berat > stok.stok) {
+    setError(`Stok ${stok.nama_sampah} tidak mencukupi (tersedia ${stok.stok} kg)`)
+    return
+  }
+}
+  setOpenConfirm(true)
+}
 
-    if (items.some(i => i.berat <= 0 || i.harga_jual <= 0)) {
-      alert("Berat dan harga jual harus lebih dari 0")
-      return
-    }
-
-    if (!validasiStok()) return
-
+  const confirmSubmit = async () => {
     try {
-
       setLoading(true)
+      setError("")
 
       await createPenjualan(items)
 
       setItems([])
-
+      setDisplayHarga({})
+      setOpenConfirm(false)
       onSuccess()
-
       onClose()
 
-    } catch (err) {
-
-      alert("Gagal menyimpan penjualan")
-
     } finally {
-
       setLoading(false)
-
     }
-
   }
 
   return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-3 sm:px-6">
 
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
+      <div className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 space-y-5">
 
-      <div className="bg-white w-[900px] rounded-lg p-6">
-
-        <h2 className="text-lg font-semibold mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold text-green-800">
           Jual Sampah
         </h2>
 
-        <table className="w-full text-sm">
+        {error && (
+          <p className="text-red-500 text-sm">
+            {error}
+          </p>
+        )}
 
-          <thead className="bg-green-100">
-            <tr>
-              <th className="p-2">Jenis Sampah</th>
-              <th className="p-2">Berat (kg)</th>
-              <th className="p-2">Harga Jual / kg</th>
-              <th className="p-2">Total</th>
-              <th className="p-2"></th>
-            </tr>
-          </thead>
+        {/* ================= MOBILE (TETAP) ================= */}
+        <div className="space-y-4 md:hidden">
+          {items.map((item, index) => {
+            const filtered = stokData.filter(s =>
+              s.nama_sampah.toLowerCase().includes((search[index] || "").toLowerCase())
+            )
 
-          <tbody>
+            const total = item.berat * item.harga_jual
 
-            {items.map((item, index) => {
+            return (
+              <div key={index} className="border rounded-xl p-3 space-y-3 bg-gray-50 relative">
 
-              const total = item.berat * item.harga_jual
+                <div className="relative">
+                  <input
+                    placeholder="Ketik jenis sampah..."
+                    className="w-full border rounded-lg p-2 text-sm"
+                    value={search[index] ?? item.nama_sampah}
+                    onChange={(e)=>{
+                      setSearch({ ...search, [index]: e.target.value })
+                      setShowSugest({ ...showSugest, [index]: true })
+                    }}
+                    onFocus={() => setShowSugest({ ...showSugest, [index]: true })}
+                  />
 
-              return (
-
-                <tr key={index} className="border-t">
-
-                  <td className="p-2">
-
-                    <input
-                      list={`sampah-${index}`}
-                      className="border p-1 w-full"
-                      placeholder="Ketik nama sampah"
-                      value={item.nama_sampah}
-                      onChange={(e) => {
-
-                        const selected = stokData.find(
-                          s => s.nama_sampah.toLowerCase() === e.target.value.toLowerCase()
-                        )
-
-                        if (selected) {
-
-                          updateItem(index, "jenis_sampah_id", selected.jenis_sampah_id)
-
-                        } else {
-
-                          const newItems = [...items]
-                          newItems[index].nama_sampah = e.target.value
-                          setItems(newItems)
-
-                        }
-
-                      }}
-                    />
-
-                    <datalist id={`sampah-${index}`}>
-
-                      {stokData.map((s) => (
-
-                        <option
+                  {showSugest[index] && filtered.length > 0 && (
+                    <div className="absolute z-10 bg-white border w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow">
+                      {filtered.map(s => (
+                        <div
                           key={s.jenis_sampah_id}
-                          value={s.nama_sampah}
+                          className="p-2 text-sm hover:bg-green-100 cursor-pointer"
+                          onClick={()=>{
+                            updateItem(index, "jenis_sampah_id", s.jenis_sampah_id)
+                            setSearch({ ...search, [index]: s.nama_sampah })
+                            setShowSugest({ ...showSugest, [index]: false })
+                          }}
                         >
                           {s.nama_sampah} (stok {s.stok} kg)
-                        </option>
-
+                        </div>
                       ))}
+                    </div>
+                  )}
+                </div>
 
-                    </datalist>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="number"
+                    placeholder="Berat (kg)"
+                    className="border rounded-lg p-2 text-sm"
+                    value={item.berat || ""}
+                    onChange={(e)=>updateItem(index, "berat", e.target.value)}
+                  />
 
-                  </td>
+                  <input
+                    placeholder="Harga jual"
+                    className="border rounded-lg p-2 text-sm"
+                    value={displayHarga[index] ?? ""}
+                    onChange={(e)=>{
+                      const raw = e.target.value.replace(/\D/g, "")
+                      setDisplayHarga({
+                        ...displayHarga,
+                        [index]: formatNumber(raw)
+                      })
+                      updateItem(index, "harga_jual", parseNumber(raw))
+                    }}
+                  />
+                </div>
 
-                  <td className="p-2">
-
-                    <input
-                      type="number"
-                      className="border p-1 w-full"
-                      value={item.berat || ""}
-                      onChange={(e) =>
-                        updateItem(index, "berat", e.target.value)
-                      }
-                    />
-
-                  </td>
-
-                  <td className="p-2">
-
-                    <div className="flex items-center border px-2 rounded">
-
-  <span className="text-gray-500 mr-1">Rp</span>
-
-  <input
-    type="text"
-    className="p-1 w-full outline-none"
-    value={displayHarga[index] ?? ""}
-    onChange={(e) => {
-
-      const raw = e.target.value.replace(/\D/g, "")
-
-      setDisplayHarga({
-        ...displayHarga,
-        [index]: formatNumber(raw)
-      })
-
-      updateItem(index, "harga_jual", parseNumber(raw))
-
-    }}
-  />
-
-</div>
-
-                  </td>
-
-                  <td className="p-2">
+                <div className="flex justify-between text-sm">
+                  <span>Total</span>
+                  <span className="font-semibold text-green-700">
                     Rp {total.toLocaleString("id-ID")}
-                  </td>
+                  </span>
+                </div>
 
-                  <td className="p-2">
+                <button
+                  onClick={()=>hapusItem(index)}
+                  className="text-red-500 text-sm"
+                >
+                  Hapus
+                </button>
 
-                    <button
-                      onClick={() => hapusItem(index)}
-                      className="text-red-500"
-                    >
-                      Hapus
-                    </button>
+              </div>
+            )
+          })}
+        </div>
 
-                  </td>
+        {/* ================= DESKTOP (REVISI TOTAL) ================= */}
+        <div className="hidden md:flex flex-col gap-3">
 
-                </tr>
+          {items.map((item, index) => {
 
-              )
-            })}
+            const filtered = stokData.filter(s =>
+              s.nama_sampah.toLowerCase().includes((search[index] || "").toLowerCase())
+            )
 
-          </tbody>
+            const total = item.berat * item.harga_jual
 
-        </table>
+            return (
+              <div key={index} className="grid grid-cols-12 gap-2 items-center">
+
+                {/* JENIS */}
+                <div className="col-span-4 relative">
+                  <input
+                    className="border rounded-lg p-2 w-full"
+                    placeholder="Ketik jenis sampah..."
+                    value={search[index] ?? item.nama_sampah}
+                    onChange={(e)=>{
+                      setSearch({ ...search, [index]: e.target.value })
+                      setShowSugest({ ...showSugest, [index]: true })
+                    }}
+                    onFocus={() => setShowSugest({ ...showSugest, [index]: true })}
+                  />
+
+                  {showSugest[index] && filtered.length > 0 && (
+                    <div className="absolute z-10 bg-white border w-full mt-1 rounded-lg max-h-40 overflow-y-auto shadow">
+                      {filtered.map(s => (
+                        <div
+                          key={s.jenis_sampah_id}
+                          className="p-2 hover:bg-green-100 cursor-pointer"
+                          onClick={()=>{
+                            updateItem(index, "jenis_sampah_id", s.jenis_sampah_id)
+                            setSearch({ ...search, [index]: s.nama_sampah })
+                            setShowSugest({ ...showSugest, [index]: false })
+                          }}
+                        >
+                          {s.nama_sampah}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* BERAT */}
+                <div className="col-span-2">
+                  <input
+                    type="number"
+                    className="border rounded-lg p-2 w-full"
+                    placeholder="kg"
+                    value={item.berat || ""}
+                    onChange={(e)=>updateItem(index, "berat", e.target.value)}
+                  />
+                </div>
+
+                {/* HARGA */}
+                <div className="col-span-3">
+                  <input
+                    className="border rounded-lg p-2 w-full"
+                    placeholder="Harga"
+                    value={displayHarga[index] ?? ""}
+                    onChange={(e)=>{
+                      const raw = e.target.value.replace(/\D/g, "")
+                      setDisplayHarga({
+                        ...displayHarga,
+                        [index]: formatNumber(raw)
+                      })
+                      updateItem(index, "harga_jual", parseNumber(raw))
+                    }}
+                  />
+                </div>
+
+                {/* TOTAL */}
+                <div className="col-span-2 text-green-700 font-semibold">
+                  Rp {total.toLocaleString("id-ID")}
+                </div>
+
+                {/* DELETE */}
+                <div className="col-span-1 text-center">
+                  <button
+                    onClick={()=>hapusItem(index)}
+                    className="text-red-500"
+                  >
+                    Hapus
+                  </button>
+                </div>
+
+              </div>
+            )
+          })}
+
+        </div>
 
         <button
           onClick={tambahItem}
-          className="mt-3 text-green-600"
+          className="text-green-600 font-medium text-sm"
         >
-          + Tambah Jenis Sampah
+          + Tambah item
         </button>
 
-        <div className="mt-6 border-t pt-4 text-sm space-y-1">
-
+        <div className="border-t pt-4 space-y-1 text-sm sm:text-base">
           <div>
-            Total Penjualan : <b>Rp {totalPenjualan.toLocaleString("id-ID")}</b>
+            Total: <b>Rp {totalPenjualan.toLocaleString("id-ID")}</b>
           </div>
-
-          
-
           <div>
-            Laba / Rugi :{" "}
+            Laba/Rugi:{" "}
             <b className={labaRugi >= 0 ? "text-green-600" : "text-red-600"}>
               Rp {labaRugi.toLocaleString("id-ID")}
             </b>
           </div>
-
         </div>
 
-        <div className="flex justify-end gap-2 mt-6">
-
+        <div className="flex justify-end gap-2 pt-2">
           <button
             onClick={onClose}
-            className="px-4 py-2 border rounded"
+            className="px-4 py-2 border rounded-lg text-sm"
           >
             Batal
           </button>
 
           <button
             onClick={handleSubmit}
-            disabled={loading}
-            className="px-4 py-2 bg-green-600 text-white rounded"
+            disabled={loading || openConfirm}
+            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm disabled:opacity-50"
           >
-            {loading ? "Menyimpan..." : "Simpan"}
+            {loading ? "Memproses..." : "Jual Sampah"}
           </button>
-
         </div>
 
       </div>
 
+      <ConfirmModal
+        isOpen={openConfirm}
+        title="Konfirmasi Penjualan"
+        message={`Anda akan menjual ${items.length} item dengan total Rp ${totalPenjualan.toLocaleString("id-ID")}. Lanjutkan?`}
+        onConfirm={confirmSubmit}
+        onCancel={() => setOpenConfirm(false)}
+      />
     </div>
-
   )
 }

@@ -1,3 +1,6 @@
+"use client"
+
+import { useState, useMemo } from "react"
 import { Nasabah } from "@/types/nasabah"
 import Link from "next/link"
 import { Pencil, Eye } from "lucide-react"
@@ -9,74 +12,108 @@ interface Props {
 
 export default function NasabahTable({ data, onEdit }: Props) {
 
+  const [page, setPage] = useState(1)
+  const limit = 10
+
+  const totalPage = Math.ceil(data.length / limit)
+
+  const paginatedData = useMemo(() => {
+    const start = (page - 1) * limit
+    const end = start + limit
+    return data.slice(start, end)
+  }, [data, page])
+
   return (
 
-    <div className="w-full overflow-x-auto rounded-lg border border-green-100">
+    <div className="w-full"> {/* ✅ FIX UTAMA */}
 
-      <table className="w-full min-w-[600px]">
+      {paginatedData.length === 0 ? (
+        <div className="text-center text-gray-500 py-6 text-sm">
+          Data nasabah belum ada
+        </div>
+      ) : (
 
-        <thead className="bg-green-100 text-green-900">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full">
 
-          <tr>
-            <th className="p-4 text-left">Nama</th>
-            <th className="p-4 text-left">Alamat</th>
-            <th className="p-4 text-left">No HP</th>
-            <th className="p-4 text-center">Aksi</th>
-          </tr>
+          {paginatedData.map((n) => (
 
-        </thead>
-
-        <tbody>
-
-          {data.length === 0 && (
-            <tr>
-              <td colSpan={4} className="p-4 text-center text-gray-500">
-                Data nasabah belum ada
-              </td>
-            </tr>
-          )}
-
-          {data.map((n) => (
-
-            <tr
+            <div
               key={n.id}
-              className="border-t hover:bg-green-50 transition"
+              className="bg-white border border-green-100 shadow-sm p-4 md:p-5 hover:shadow-md transition w-full"
             >
 
-              <td className="p-4">{n.nama}</td>
-              <td className="p-4">{n.alamat}</td>
-              <td className="p-4">{n.no_hp}</td>
+              <h3 className="text-sm md:text-base font-semibold text-green-800 mb-2">
+                {n.nama}
+              </h3>
 
-              <td className="p-4 flex justify-center gap-2">
+              <div className="space-y-1 text-xs md:text-sm text-gray-600 mb-4">
 
-  <Link
-    href={`/nasabah/${n.id}`}
-    className="flex items-center gap-1 bg-blue-400 hover:bg-blue-500 text-white px-3 py-1 rounded-md text-sm"
-  >
-    <Eye size={16}/>
-    Detail
-  </Link>
+                <p>
+                  <span className="font-medium text-gray-700">Alamat:</span><br />
+                  {n.alamat}
+                </p>
 
-  <button
-    type="button"
-    onClick={() => onEdit(n)}
-    className="flex items-center gap-1 bg-green-400 hover:bg-green-500 text-white px-3 py-1 rounded-md text-sm"
-  >
-    <Pencil size={16}/>
-    Edit
-  </button>
+                <p>
+                  <span className="font-medium text-gray-700">No HP:</span><br />
+                  {n.no_hp}
+                </p>
 
-</td>
+              </div>
 
-            </tr>
+              <div className="flex gap-2">
+
+                <Link
+                  href={`/nasabah/${n.id}`}
+                  className="flex-1 flex items-center justify-center gap-1 bg-blue-500 hover:bg-blue-600 text-white py-1.5 text-xs md:text-sm"
+                >
+                  <Eye size={16} />
+                  Detail
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => onEdit(n)}
+                  className="flex-1 flex items-center justify-center gap-1 bg-green-500 hover:bg-green-600 text-white py-1.5 text-xs md:text-sm"
+                >
+                  <Pencil size={16} />
+                  Edit
+                </button>
+
+              </div>
+
+            </div>
 
           ))}
 
-        </tbody>
+        </div>
 
-      </table>
+      )}
+
+      {/* PAGINATION */}
+      <div className="flex justify-between items-center mt-6 text-xs md:text-sm">
+
+        <button
+          disabled={page === 1}
+          onClick={() => setPage(page - 1)}
+          className="px-3 py-1.5 border rounded-lg disabled:opacity-40 hover:bg-gray-50"
+        >
+          Prev
+        </button>
+
+        <span className="text-gray-600">
+          Halaman {page} / {totalPage || 1}
+        </span>
+
+        <button
+          disabled={page === totalPage || totalPage === 0}
+          onClick={() => setPage(page + 1)}
+          className="px-3 py-1.5 border rounded-lg disabled:opacity-40 hover:bg-gray-50"
+        >
+          Next
+        </button>
+
+      </div>
 
     </div>
-
   )
 }
