@@ -182,16 +182,23 @@ export async function getDetailSetor(transaksiId: string) {
       berat,
       harga,
       subtotal,
-      jenis_sampah (
+      jenis_sampah!fk_jenis_sampah (
         nama_sampah
       )
     `)
     .eq("transaksi_id", transaksiId)
 
   if (error) {
-    console.error("getDetailSetor:", error)
-    throw error
+    console.error("getDetailSetor FULL:", JSON.stringify(error, null, 2))
+    return []
   }
 
-  return data || []
+  const formatted = (data || []).map((item: any) => ({
+    ...item,
+    jenis_sampah: Array.isArray(item.jenis_sampah)
+      ? item.jenis_sampah[0]
+      : item.jenis_sampah
+  }))
+
+  return formatted
 }

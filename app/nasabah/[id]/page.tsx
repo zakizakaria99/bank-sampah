@@ -109,15 +109,20 @@ export default function NasabahDetailPage() {
   }, [nasabahId, page, pageSetor, loadNasabah, loadPenarikan, loadSetor])
 
   async function handleOpenDetail(id: string) {
-    if (openTransaksi === id) {
-      setOpenTransaksi(null)
-      return
-    }
+  console.log("ID DIKLIK:", id)
 
-    const data = await getDetailSetor(id)
-    setDetailSetor(data || [])
-    setOpenTransaksi(id)
+  if (openTransaksi === id) {
+    setOpenTransaksi(null)
+    return
   }
+
+  const data = await getDetailSetor(id)
+
+  console.log("HASIL DETAIL:", data)
+
+  setDetailSetor(data || [])
+  setOpenTransaksi(id)
+}
 
   async function confirmTarikSaldo() {
     const jumlah = Number(jumlahTarik)

@@ -87,12 +87,12 @@ export async function getLaporanSampahTahunan(
     .select(`
       tanggal,
       detail_transaksi (
-        berat,
-        harga,
-        jenis_sampah:jenis_sampah_id (
-          nama_sampah
-        )
-      )
+  berat,
+  harga,
+  jenis_sampah (
+    nama_sampah
+  )
+)
     `)
 
   if (error) {

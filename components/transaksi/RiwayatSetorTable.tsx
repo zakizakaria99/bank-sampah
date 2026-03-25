@@ -83,7 +83,7 @@ export default function RiwayatSetorTable({
                           {detail.map((d) => (
                             <tr key={d.id}>
                               <td className="border p-2 text-center">
-  {d.jenis_sampah[0]?.nama_sampah || "-"}
+  {d.jenis_sampah?.nama_sampah || "-"}
 </td>
                               <td className="border p-2 text-center">
                                 {d.berat} kg

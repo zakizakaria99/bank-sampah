@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -20,16 +19,18 @@ interface Props {
   data: GrafikData[]
 }
 
+// ✅ FORMAT RUPIAH
 function formatRupiah(value: number) {
   return "Rp " + value.toLocaleString("id-ID")
 }
 
+// ✅ LABEL ROTATE (FIX POSISI BIAR GA KEPOTONG)
 const VerticalLabel = (props: any) => {
   const { x, y, width, value } = props
   if (value === undefined || value === null) return null
 
   const centerX = x + width / 2
-  const labelY = y - 18
+  const labelY = y - 10 // 🔥 sebelumnya -30 (terlalu jauh)
 
   return (
     <text
@@ -53,8 +54,9 @@ export default function GrafikTransaksi({ data }: Props) {
   const [showBerat, setShowBerat] = useState(true)
   const [showPendapatan, setShowPendapatan] = useState(true)
 
-  const maxBerat = Math.max(...data.map(d => d.berat), 0)
-  const maxPendapatan = Math.max(...data.map(d => d.pendapatan), 0)
+  // ✅ HANDLE DATA KOSONG (ANTI ERROR)
+  const maxBerat = Math.max(...data.map(d => d.berat || 0), 0)
+  const maxPendapatan = Math.max(...data.map(d => d.pendapatan || 0), 0)
 
   const beratMaxAxis = Math.ceil(maxBerat * 1.6)
   const pendapatanMaxAxis = Math.ceil(maxPendapatan * 1.6)
@@ -62,57 +64,55 @@ export default function GrafikTransaksi({ data }: Props) {
   return (
     <div className="space-y-4">
 
-      {/* ===== LEGEND + TOGGLE ===== */}
+      {/* ===== HEADER + TOGGLE ===== */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
 
-  {/* LEFT: TITLE */}
-  <div>
-    <h3 className="text-sm sm:text-base font-semibold text-gray-800">
-      Perbandingan Data
-    </h3>
-    <p className="text-xs text-gray-500">
-      Pilih data yang ingin ditampilkan
-    </p>
-  </div>
+        <div>
+          <h3 className="text-sm sm:text-base font-semibold text-gray-800">
+            Perbandingan Data
+          </h3>
+          <p className="text-xs text-gray-500">
+            Pilih data yang ingin ditampilkan
+          </p>
+        </div>
 
-  {/* RIGHT: TOGGLE */}
-  <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
+        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl">
 
-    {/* BERAT */}
-    <button
-      onClick={() => setShowBerat(!showBerat)}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition
-        ${showBerat
-          ? "bg-white shadow-sm text-green-700"
-          : "text-gray-500"
-        }`}
-    >
-      <span className="w-2.5 h-2.5 rounded-full bg-green-600" />
-      Berat
-    </button>
+          {/* BERAT */}
+          <button
+            onClick={() => setShowBerat(!showBerat)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition
+              ${showBerat
+                ? "bg-white shadow-sm text-green-700"
+                : "text-gray-500"
+              }`}
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-green-600" />
+            Berat
+          </button>
 
-    {/* PENDAPATAN */}
-    <button
-      onClick={() => setShowPendapatan(!showPendapatan)}
-      className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition
-        ${showPendapatan
-          ? "bg-white shadow-sm text-green-700"
-          : "text-gray-500"
-        }`}
-    >
-      <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-      Pendapatan
-    </button>
+          {/* PENDAPATAN */}
+          <button
+            onClick={() => setShowPendapatan(!showPendapatan)}
+            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm transition
+              ${showPendapatan
+                ? "bg-white shadow-sm text-green-700"
+                : "text-gray-500"
+              }`}
+          >
+            <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
+            Pendapatan
+          </button>
 
-  </div>
+        </div>
 
-</div>
+      </div>
 
       {/* ===== CHART ===== */}
       <div className="w-full h-[320px] sm:h-[380px] md:h-[420px]">
 
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data}>
+          <BarChart data={data} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
 
             <CartesianGrid strokeDasharray="3 3" />
 
@@ -121,21 +121,23 @@ export default function GrafikTransaksi({ data }: Props) {
               tick={{ fontSize: 10 }}
             />
 
+            {/* BERAT */}
             {showBerat && (
               <YAxis
                 yAxisId="berat"
                 orientation="left"
-                domain={[0, beratMaxAxis]}
-                tickFormatter={(v) => `${v} Kg`}
+                domain={[0, beratMaxAxis || 10]}
+                tickFormatter={(v) => `${v} kg`} // 🔥 spasi diperbaiki
                 tick={{ fontSize: 10 }}
               />
             )}
 
+            {/* PENDAPATAN */}
             {showPendapatan && (
               <YAxis
                 yAxisId="pendapatan"
                 orientation="right"
-                domain={[0, pendapatanMaxAxis]}
+                domain={[0, pendapatanMaxAxis || 1000]}
                 tickFormatter={(v) => formatRupiah(Number(v))}
                 tick={{ fontSize: 10 }}
               />
@@ -147,7 +149,7 @@ export default function GrafikTransaksi({ data }: Props) {
                 const val = Number(value ?? 0)
                 return name === "Pendapatan"
                   ? formatRupiah(val)
-                  : `${val} Kg`
+                  : `${val} kg`
               }}
             />
 
@@ -165,7 +167,7 @@ export default function GrafikTransaksi({ data }: Props) {
                   content={(props) => (
                     <VerticalLabel
                       {...props}
-                      value={`${Number(props.value ?? 0)}kg`}
+                      value={`${Number(props.value ?? 0)} kg`} // 🔥 spasi fix
                     />
                   )}
                 />

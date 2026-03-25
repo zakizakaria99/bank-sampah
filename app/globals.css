@@ -29,3 +29,10 @@ body {
   transition duration-300
   hover:shadow-xl hover:-translate-y-1;
 }
+
+/* 🔥 FIX html2canvas (lab / oklch issue) */
+.pdf-safe * {
+  color: #000000 !important;
+  background: #ffffff !important;
+  border-color: #e5e7eb !important;
+}
