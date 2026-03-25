@@ -15,17 +15,17 @@ export default function HomePage() {
   <div
     className="absolute inset-0 bg-cover bg-center md:hidden"
     style={{
-      backgroundImage: "url('/hero-mobile.png')"
-    }}
+  backgroundImage: "url('/images/hero-mobile.png')"
+}}
   />
 
   {/* DESKTOP */}
   <div
   className="absolute inset-0 bg-cover hidden md:block"
   style={{
-    backgroundImage: "url('/hero-desktop.png')",
-    backgroundPosition: "center 70%"
-  }}
+  backgroundImage: "url('/images/hero-desktop.png')",
+  backgroundPosition: "center 70%"
+}}
 />
 
 </div>
@@ -55,12 +55,11 @@ export default function HomePage() {
     </p>
 
     <Image
-      src="/logo-orbit.png"
-      alt="Logo Bank Sampah Orbit"
-      width={80}
-      height={80}
-      className="mt-1"
-    />
+  src="/images/logo-orbit.png"
+  alt="Logo Bank Sampah Orbit"
+  width={80}
+  height={80}
+/>
 
   </div>
 
@@ -69,12 +68,11 @@ export default function HomePage() {
   <div className="hidden md:flex items-center gap-6 text-left">
 
     <Image
-      src="/logo-orbit.png"
-      alt="Logo Bank Sampah Orbit"
-      width={140}
-      height={140}
-      className="w-28 lg:w-36"
-    />
+  src="/images/logo-orbit.png"
+  alt="Logo Bank Sampah Orbit"
+  width={140}
+  height={140}
+/>
 
     <div>
 
@@ -128,23 +126,19 @@ export default function HomePage() {
   href="/nasabah"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Nasabah1.png"
+    src="/images/nasabah.png"
     alt="Nasabah"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Nasabah
     </span>
   </div>
-
 </Link>
 
 
@@ -153,23 +147,19 @@ export default function HomePage() {
   href="/jenis-sampah"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Jenis-sampah1.png"
-    alt="Jenis-sampah"
+    src="/images/jenis-sampah.png"
+    alt="Jenis Sampah"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Jenis Sampah
     </span>
   </div>
-
 </Link>
 
 
@@ -178,23 +168,19 @@ export default function HomePage() {
   href="/transaksi"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Transaksi1.png"
+    src="/images/transaksi.png"
     alt="Transaksi"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Transaksi
     </span>
   </div>
-
 </Link>
 
 
@@ -203,23 +189,19 @@ export default function HomePage() {
   href="/stok-sampah"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Stok1.png"
+    src="/images/stok.png"
     alt="Stok Sampah"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Stok Sampah
     </span>
   </div>
-
 </Link>
 
 
@@ -228,23 +210,19 @@ export default function HomePage() {
   href="/laporan"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Laporan1.png"
+    src="/images/laporan.png"
     alt="Laporan"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Laporan
     </span>
   </div>
-
 </Link>
 
 
@@ -253,23 +231,19 @@ export default function HomePage() {
   href="/grafik"
   className="group relative bg-white rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-1 transition-all overflow-hidden aspect-square flex items-center justify-center"
 >
-
-  {/* ICON */}
   <Image
-    src="/Grafik1.png"
+    src="/images/grafik.png"
     alt="Grafik"
     width={200}
     height={200}
     className="transition-transform group-hover:scale-110"
   />
 
-  {/* TEXT */}
   <div className="absolute bottom-1 left-0 right-0 text-center">
     <span className="text-lg font-semibold text-gray-700">
       Grafik
     </span>
   </div>
-
 </Link>
 
         </div>
