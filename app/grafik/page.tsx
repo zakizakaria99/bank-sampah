@@ -71,11 +71,7 @@ export default function GrafikPage() {
   }, [tahunTabel])
 
   // ================= PDF =================
-  async function downloadSection(
-    id: string,
-    filename: string,
-    info?: any
-  ) {
+  async function downloadSection(id: string, filename: string, info?: any) {
     const element = document.getElementById(id)
     if (!element) return
 
@@ -87,14 +83,12 @@ export default function GrafikPage() {
     container.appendChild(cloned)
     document.body.appendChild(container)
 
-    // 🔥 FIX SIZE KHUSUS GRAFIK
     if (id === "grafik-area") {
       cloned.style.width = "1200px"
       cloned.style.height = "500px"
       cloned.style.padding = "20px"
     }
 
-    // 🔥 BERSIHKAN STYLE (fix lab/oklch)
     const all = cloned.querySelectorAll("*")
     all.forEach((el) => {
       const e = el as HTMLElement
@@ -115,18 +109,12 @@ export default function GrafikPage() {
 
     const pdf = new jsPDF("l", "mm", "a4")
 
-    // ===== HEADER =====
     pdf.setFontSize(18)
     pdf.text("LAPORAN BANK SAMPAH", 14, 15)
 
     pdf.setFontSize(11)
-    pdf.text(
-      `Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}`,
-      14,
-      22
-    )
+    pdf.text(`Tanggal Cetak: ${new Date().toLocaleDateString("id-ID")}`, 14, 22)
 
-    // ===== INFO =====
     if (info?.type === "grafik") {
       pdf.text(`Tahun: ${info.tahun}`, 14, 30)
       pdf.text(`Semester: ${info.semester}`, 14, 36)
@@ -136,14 +124,11 @@ export default function GrafikPage() {
       pdf.text(`Tahun: ${info.tahun}`, 14, 30)
     }
 
-    // ===== IMAGE =====
     const pageWidth = 297
     const imgWidth = pageWidth - 20
     const imgHeight = (canvas.height * imgWidth) / canvas.width
 
-    let position = 45
-
-    pdf.addImage(imgData, "PNG", 10, position, imgWidth, imgHeight)
+    pdf.addImage(imgData, "PNG", 10, 45, imgWidth, imgHeight)
 
     pdf.save(filename)
   }
@@ -192,8 +177,7 @@ export default function GrafikPage() {
     })
 
     const file = new Blob([excelBuffer], {
-      type:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8"
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8"
     })
 
     saveAs(file, `laporan-sampah-${tahunTabel}.xlsx`)
@@ -215,29 +199,46 @@ export default function GrafikPage() {
       {/* ================= GRAFIK ================= */}
       <motion.div className="bg-white rounded-2xl border shadow-sm p-4 sm:p-6 space-y-5">
 
-        <div className="flex justify-between">
-
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
           <h2 className="font-semibold text-gray-800">
             Grafik Transaksi
           </h2>
 
           <button
             onClick={() =>
-              downloadSection(
-                "grafik-area",
-                `grafik-${tahunGrafik}.pdf`,
-                {
-                  type: "grafik",
-                  tahun: tahunGrafik,
-                  semester
-                }
-              )
+              downloadSection("grafik-area", `grafik-${tahunGrafik}.pdf`, {
+                type: "grafik",
+                tahun: tahunGrafik,
+                semester
+              })
             }
             className="bg-green-600 text-white px-3 py-1.5 rounded-lg"
           >
             Download PDF
           </button>
+        </div>
 
+        {/* 🔥 FILTER GRAFIK */}
+        <div className="flex gap-2">
+          <select
+            value={tahunGrafik}
+            onChange={(e) => setTahunGrafik(Number(e.target.value))}
+            className="border px-2 py-1 rounded text-sm"
+          >
+            {tahunList.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+
+          <select
+            value={semester}
+            onChange={(e) => setSemester(Number(e.target.value))}
+            className="border px-2 py-1 rounded text-sm"
+          >
+            <option value={1}>Semester 1</option>
+            <option value={2}>Semester 2</option>
+          </select>
         </div>
 
         <div id="grafik-area">
@@ -253,24 +254,19 @@ export default function GrafikPage() {
       {/* ================= TABEL ================= */}
       <motion.div className="bg-white rounded-2xl border shadow-sm p-4 sm:p-6 space-y-5">
 
-        <div className="flex justify-between">
-
+        {/* HEADER */}
+        <div className="flex justify-between items-center">
           <h2 className="font-semibold text-gray-800">
             Laporan Sampah Tahunan
           </h2>
 
           <div className="flex gap-2">
-
             <button
               onClick={() =>
-                downloadSection(
-                  "tabel-area",
-                  `tabel-${tahunTabel}.pdf`,
-                  {
-                    type: "tabel",
-                    tahun: tahunTabel
-                  }
-                )
+                downloadSection("tabel-area", `tabel-${tahunTabel}.pdf`, {
+                  type: "tabel",
+                  tahun: tahunTabel
+                })
               }
               className="bg-emerald-600 text-white px-3 py-1.5 rounded-lg"
             >
@@ -283,9 +279,20 @@ export default function GrafikPage() {
             >
               Download Excel
             </button>
-
           </div>
+        </div>
 
+        {/* 🔥 FILTER TABEL */}
+        <div>
+          <select
+            value={tahunTabel}
+            onChange={(e) => setTahunTabel(Number(e.target.value))}
+            className="border px-2 py-1 rounded text-sm"
+          >
+            {tahunList.map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
         </div>
 
         <div id="tabel-area">

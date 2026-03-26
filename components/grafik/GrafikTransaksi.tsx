@@ -30,7 +30,7 @@ const VerticalLabel = (props: any) => {
   if (value === undefined || value === null) return null
 
   const centerX = x + width / 2
-  const labelY = y - 10 // 🔥 sebelumnya -30 (terlalu jauh)
+  const labelY = y - 30 // 
 
   return (
     <text
